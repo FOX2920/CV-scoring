@@ -1,0 +1,10 @@
+streamlit 
+google-generativeai 
+pypdf 
+python-docx 
+pandas
+nltk
+scikit-learn
+plotly
+pandas
+tiktoken
