@@ -53,6 +53,16 @@ def get_docx_text_from_url(url):
 
 # Hàm kiểm tra định dạng file và chọn hàm tương ứng
 def get_cv_text_from_url(cv_url):
+    if not isinstance(cv_url, str):
+        print(f"Invalid URL format: {cv_url}. Expected string, got {type(cv_url)}.")
+        return None
+    
+    cv_url = cv_url.strip()  # Remove any leading/trailing whitespace
+    
+    if not cv_url:  # Check if the URL is empty after stripping
+        print("Empty URL provided.")
+        return None
+
     if cv_url.lower().endswith('.pdf'):
         return get_pdf_text_from_url(cv_url)
     elif cv_url.lower().endswith('.docx'):
@@ -116,6 +126,7 @@ def process_data(data):
     df = pd.DataFrame(data['candidates'])
     
     df['cvs'] = df['cvs'].apply(lambda x: x[0] if len(x) > 0 else None)
+    df['cvs'] = df['cvs'].astype(str) 
     df['title'] = df['title'].apply(lambda x: re.sub(r'<.*?>', '', x) if isinstance(x, str) else x)
     df['name'] = df['name'].apply(lambda x: unescape(x))
     df['expect_salary'] = df['form'].apply(extract_salary)
@@ -242,7 +253,7 @@ with tab2:
             
             for i, row in df.iterrows():
                 name = row['name']
-                cv_url = row['cvs']
+                cv_url = row.get('cvs')
                 cv_text = get_cv_text_from_url(cv_url)
 
                 if cv_text:
