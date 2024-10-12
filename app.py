@@ -99,7 +99,7 @@ def process_data(data):
     df = df[df['expect_salary'].notnull()]
     df = df[df['expect_salary']!=""]
     df = df.dropna(axis=1, how='any')
-    selected_df = df[['id', 'name', 'email', 'status', 'cvs']]
+    selected_df = df[['id', 'name', 'email', 'status', 'cvs', 'expect_salary']]
     
     return selected_df
 
@@ -260,6 +260,7 @@ with tab2:
                     'id': 'Mã ứng viên',
                     'name': "Tên ứng viên",
                     'email': 'Email',
+                    'expect_salary': "Mức lương mong muốn"
                     'status': 'Trạng thái',
                     'cvs': 'Link CV',
                 }, inplace=True)
