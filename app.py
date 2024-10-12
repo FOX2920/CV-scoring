@@ -141,6 +141,17 @@ def process_data(data):
     
     return selected_df
 
+def load_and_select_jd(salary):
+    jd_df = pd.read_csv('JD_tc.csv')
+    if salary < 500:
+        return jd_df.iloc[0]['Job_Description']
+    elif 500 <= salary < 1000:
+        return jd_df.iloc[1]['Job_Description']
+    elif 1000 <= salary < 1500:
+        return jd_df.iloc[2]['Job_Description']
+    else:  # salary >= 1500
+        return jd_df.iloc[3]['Job_Description']
+
 # Main application
 
 st.set_page_config(page_title="Công Cụ Đánh Giá CV và Lấy Dữ Liệu Công Việc", layout="wide")
@@ -233,19 +244,11 @@ with tab1:
 with tab2:
     st.header("📊 Đánh giá và Lọc CV")
     
-    col1, col2 = st.columns(2)
-
-    with col1:
-        jd = st.text_area("Nhập thông tin công việc: ", height=500)
-
-    with col2:
-        st.subheader("📁 Tải lên file CSV chứa link CV")
-        uploaded_file = st.file_uploader("Chọn file CSV", type=['csv'])
+    st.subheader("📁 Tải lên file CSV chứa link CV")
+    uploaded_file = st.file_uploader("Chọn file CSV", type=['csv'])
 
     if st.button("🔍 Đánh giá CV"):
-        if not jd:
-            st.error("❌ Vui lòng nhập mô tả công việc.")
-        elif not uploaded_file:
+        if not uploaded_file:
             st.error("❌ Vui lòng tải lên file CSV chứa link CV.")
         else:
             df = pd.read_csv(uploaded_file)
@@ -255,6 +258,11 @@ with tab2:
             for i, row in df.iterrows():
                 name = row['name']
                 cv_url = row.get('cvs')
+                expect_salary = row.get('expect_salary', 0)
+                
+                # Select JD based on salary
+                jd = load_and_select_jd(expect_salary)
+                
                 cv_text = get_cv_text_from_url(cv_url)
 
                 if cv_text:
