@@ -19,11 +19,11 @@ cleaned_schema = {
         },
         "diem_cong": {
             "type": "integer",
-            "description": "Đánh giá mức độ theo mục Điểm cộng của Ứng viên trong JD .",
+            "description": "Đánh giá mức độ theo mục Điểm cộng của Ứng viên trong JD từ khoảng từ 0 đến 30 (mỗi tiêu chí 5 điểm)  .",
         },
         "diem_tru": {
             "type": "integer",
-            "description": "Đánh giá mức độ theo mục Điểm trừ của Ứng viên trong JD .",
+            "description": "Đánh giá mức độ theo mục Điểm trừ của Ứng viên trong JD từ khoảng từ 0 đến 40 (mỗi tiêu chí 5 điểm).",
         },
         "tom_tat": {
             "type": "string",
