@@ -9,6 +9,7 @@ import time
 import re
 from html import unescape
 import json
+from docx import Document
 from analyze import dashboard
 from config import cleaned_schema
 
@@ -57,7 +58,7 @@ def get_cv_text_from_url(cv_url):
     elif cv_url.lower().endswith('.docx'):
         return get_docx_text_from_url(cv_url)
     else:
-        print(f"Định dạng không hỗ trợ cho URL: {cv_url}")
+        print(f"Unsupported file format for URL: {cv_url}")
         return None
 
 def get_gemini_response(prompt, content):
