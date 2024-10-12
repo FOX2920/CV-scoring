@@ -30,9 +30,34 @@ def get_pdf_text_from_url(url):
             text = ""
             for page in reader.pages:
                 text += page.extract_text() + " "
-        return text
+        return ' '.join(text.split()) # Xóa khoảng trắng thừa nếu có
     except Exception as e:
         st.error(f"Lỗi khi tải hoặc trích xuất văn bản từ URL {url}: {str(e)}")
+        return None
+
+def get_docx_text_from_url(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        
+        with BytesIO(response.content) as f:
+            document = Document(f)
+            text = ""
+            for para in document.paragraphs:
+                text += para.text + "\n"
+        return ' '.join(text.split()) # Xóa khoảng trắng thừa nếu có
+    except Exception as e:
+        print(f"Lỗi khi tải hoặc trích xuất văn bản từ URL {url}: {str(e)}")
+        return None
+
+# Hàm kiểm tra định dạng file và chọn hàm tương ứng
+def get_cv_text_from_url(cv_url):
+    if cv_url.lower().endswith('.pdf'):
+        return get_pdf_text_from_url(cv_url)
+    elif cv_url.lower().endswith('.docx'):
+        return get_docx_text_from_url(cv_url)
+    else:
+        print(f"Định dạng không hỗ trợ cho URL: {cv_url}")
         return None
 
 def get_gemini_response(prompt, content):
@@ -217,7 +242,7 @@ with tab2:
             for i, row in df.iterrows():
                 name = row['name']
                 cv_url = row['cvs']
-                cv_text = get_pdf_text_from_url(cv_url)
+                cv_text = get_cv_text_from_url(cv_url)
 
                 if cv_text:
                     prompt = f"""
