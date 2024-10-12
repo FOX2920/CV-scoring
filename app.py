@@ -132,6 +132,7 @@ def process_data(data):
     df['expect_salary'] = df['form'].apply(extract_salary)
     # Filter rows where 'cvs' is not None
     df = df[df['cvs'].notnull()]
+    df = df[df['cvs']!="None"]
     # Save to CSV
     df = df[df['expect_salary'].notnull()]
     df = df[df['expect_salary']!=""]
@@ -266,8 +267,9 @@ with tab2:
                     {cv_text}
 
                     Vui lòng trả về kết quả đánh giá theo đúng schema JSON đã định nghĩa.
+                    Chú ý: Các tiêu chí mà bạn không chắc hoặc không ghi rõ trong CV thì bạn sẽ +0 điểm.
                     """
-
+                    prompt = ' '.join(prompt.split())
                     try:
                         response = get_gemini_response(prompt, cv_text)
                         
@@ -277,7 +279,9 @@ with tab2:
                             'Trục Phù hợp Văn hóa': response["truc_van_hoa"],
                             'Trục Tương lai': response["truc_tuong_lai"],
                             'Tiêu chí khác': response["tieu_chi_khac"],
-                            'Điểm tổng quát': response["truc_nang_luc"] + response["truc_van_hoa"] + response["truc_tuong_lai"] + response["tieu_chi_khac"],
+                            'Điểm cộng': response["diem_cong"]
+                            'Điểm trừ': response["diem_tru"]
+                            'Điểm tổng quát': response["truc_nang_luc"] + response["truc_van_hoa"] + response["truc_tuong_lai"] + response["tieu_chi_khac"] + response["diem_cong"] - response["diem_tru"] 
                             'Tóm tắt': response["tom_tat"]
                         }
 
