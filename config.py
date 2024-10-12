@@ -17,6 +17,14 @@ cleaned_schema = {
             "type": "integer",
             "description": "Đánh giá mức độ theo Tiêu chuẩn gợi ý khác của Ứng viên trong JD theo điểm từ khoảng từ 0 đến 10.",
         },
+        "diem_cong": {
+            "type": "integer",
+            "description": "Đánh giá mức độ theo mục Điểm cộng của Ứng viên trong JD .",
+        },
+        "diem_tru": {
+            "type": "integer",
+            "description": "Đánh giá mức độ theo mục Điểm trừ của Ứng viên trong JD .",
+        },
         "tom_tat": {
             "type": "string",
             "description": "Tóm tắt điểm mạnh và điểm yếu chính của ứng viên dựa trên CV với công việc trong JD trong 2 hoặc 3 câu."
