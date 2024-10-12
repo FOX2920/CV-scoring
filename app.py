@@ -279,9 +279,9 @@ with tab2:
                             'Trục Phù hợp Văn hóa': response["truc_van_hoa"],
                             'Trục Tương lai': response["truc_tuong_lai"],
                             'Tiêu chí khác': response["tieu_chi_khac"],
-                            'Điểm cộng': response["diem_cong"]
-                            'Điểm trừ': response["diem_tru"]
-                            'Điểm tổng quát': response["truc_nang_luc"] + response["truc_van_hoa"] + response["truc_tuong_lai"] + response["tieu_chi_khac"] + response["diem_cong"] - response["diem_tru"] 
+                            'Điểm cộng': response["diem_cong"],
+                            'Điểm trừ': response["diem_tru"],
+                            'Điểm tổng quát': response["truc_nang_luc"] + response["truc_van_hoa"] + response["truc_tuong_lai"] + response["tieu_chi_khac"] + response["diem_cong"] - response["diem_tru"], 
                             'Tóm tắt': response["tom_tat"]
                         }
 
