@@ -260,7 +260,7 @@ with tab2:
                     'id': 'Mã ứng viên',
                     'name': "Tên ứng viên",
                     'email': 'Email',
-                    'expect_salary': "Mức lương mong muốn"
+                    'expect_salary': "Mức lương mong muốn",
                     'status': 'Trạng thái',
                     'cvs': 'Link CV',
                 }, inplace=True)
