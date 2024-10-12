@@ -219,15 +219,13 @@ with tab2:
                     try:
                         response = get_gemini_response(prompt, cv_text)
                         
-
                         uv = {
                             'Tên ứng viên': name,
-                            'Mức độ phù hợp': response["muc_do_phu_hop"],
-                            'Kỹ năng kỹ thuật': response["ky_nang_ky_thuat"],
-                            'Kinh nghiệm': response["kinh_nghiem"],
-                            'Trình độ học vấn': response["trinh_do_hoc_van"],
-                            'Kỹ năng mềm': response["ky_nang_mem"],
-                            'Điểm tổng quát': round( response["diem_tong_quat"], 2),
+                            'Trục Năng lực': response["truc_nang_luc"],
+                            'Trục Phù hợp Văn hóa': response["truc_van_hoa"],
+                            'Trục Tương lai': response["truc_tuong_lai"],
+                            'Tiêu chí khác': response["tieu_chi_khac"],
+                            'Điểm tổng quát': response["truc_nang_luc"] + response["truc_van_hoa"] + response["truc_tuong_lai"] + response["tieu_chi_khac"],
                             'Tóm tắt': response["tom_tat"]
                         }
 
@@ -238,8 +236,6 @@ with tab2:
 
                 progress_bar.progress((i + 1) / len(df))
 
-
-            # Xử lý kết quả và hiển thị như trước
             if results:
                 st.subheader("📊 Kết quả đánh giá CV")
                 df_results = pd.DataFrame(results)
@@ -265,6 +261,7 @@ with tab2:
                 )
             else:
                 st.warning("⚠️ Không có kết quả nào được tạo. Vui lòng kiểm tra API key và thử lại.")
+
 with tab3:
     dashboard()
 
