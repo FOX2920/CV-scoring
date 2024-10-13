@@ -105,20 +105,28 @@ def dashboard():
             selected_candidate = st.selectbox("Chọn ứng viên", df['Tên ứng viên'].tolist())
             candidate_data = df[df['Tên ứng viên'] == selected_candidate].iloc[0]
             
-            # Create a figure for candidate information
+            # Create a figure for candidate information with colors suitable for dark theme
             fig_info = go.Figure(data=[go.Table(
                 header=dict(values=['Thông tin', 'Giá trị'],
-                            fill_color='paleturquoise',
+                            fill_color='rgba(100, 100, 100, 0.8)',  # Darker gray for header
+                            font=dict(color='white'),  # White text for header
                             align='left'),
                 cells=dict(values=[['Tên', 'Vị trí', 'Điểm tổng quát', 'Mức lương mong muốn'],
                                    [candidate_data['Tên ứng viên'],
                                     candidate_data['Vị trí'],
                                     f"{candidate_data['Điểm tổng quát']:.2f}",
                                     f"{candidate_data['Mức lương mong muốn']:,.0f}"]],
-                           fill_color='lavender',
+                           fill_color='rgba(50, 50, 50, 0.8)',  # Darker background for cells
+                           font=dict(color='lightgray'),  # Light gray text for better readability
                            align='left'))
             ])
-            fig_info.update_layout(title="Thông tin ứng viên", height=200, margin=dict(l=0, r=0, t=30, b=0))
+            fig_info.update_layout(
+                title=dict(text="Thông tin ứng viên", font=dict(color='white')),  # White title
+                height=200,
+                margin=dict(l=0, r=0, t=30, b=0),
+                paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
+                plot_bgcolor='rgba(0,0,0,0)'  # Transparent plot area
+            )
             st.plotly_chart(fig_info, use_container_width=True)
     
             candidate_summary = candidate_data['Tóm tắt']
@@ -126,7 +134,6 @@ def dashboard():
             st.write(candidate_summary)
         with col2:
             st.plotly_chart(plot_candidate_radar(df, selected_candidate), use_container_width=True)
-
         
         st.header("🔍 Lọc và Sắp xếp ứng viên")
         col1, col2, col3 = st.columns(3)
