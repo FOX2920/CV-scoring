@@ -47,19 +47,20 @@ def dashboard():
         fig_criteria.update_layout(title="Phân phối điểm các tiêu chí đánh giá", yaxis_title="Điểm")
         st.plotly_chart(fig_criteria, use_container_width=True)
         
-        # st.header("💰 Phân tích Mức lương mong muốn")
-        # col1, col2 = st.columns(2)
-        # with col1:
-        #     fig_salary_position = px.box(df, x='Vị trí', y='Mức lương mong muốn', 
-        #                                  title="Mức lương mong muốn theo Vị trí",
-        #                                  labels={"Mức lương mong muốn": "Mức lương", "Vị trí": "Vị trí"})
-        #     st.plotly_chart(fig_salary_position, use_container_width=True)
-        # with col2:
-        #     fig_salary_score = px.scatter(df, x="Mức lương mong muốn", y="Điểm tổng quát", 
-        #                                   hover_data=["Tên ứng viên", "Vị trí"],
-        #                                   color="Vị trí", size="Điểm tổng quát",
-        #                                   title="Mối quan hệ giữa Điểm tổng quát và Mức lương mong muốn")
-        #     st.plotly_chart(fig_salary_score, use_container_width=True)
+        st.header("💰 Phân tích Mức lương mong muốn")
+        col1, col2 = st.columns(2)
+        df['Điểm tổng'] = df['Điểm tổng quát'].clip(lower=0)
+        with col1:
+            fig_salary_position = px.box(df, x='Vị trí', y='Mức lương mong muốn', 
+                                         title="Mức lương mong muốn theo Vị trí",
+                                         labels={"Mức lương mong muốn": "Mức lương", "Vị trí": "Vị trí"})
+            st.plotly_chart(fig_salary_position, use_container_width=True)
+        with col2:
+            fig_salary_score = px.scatter(df, x="Mức lương mong muốn", y="Điểm tổng quát", 
+                                             hover_data=["Tên ứng viên", "Vị trí"],
+                                            color="Vị trí", size=df["Điểm tổng quát"].abs(),
+                                             title="Mối quan hệ giữa Điểm tổng quát và Mức lương mong muốn")
+            st.plotly_chart(fig_salary_score, use_container_width=True)
         
         st.header("🎭 Phân tích Pass/Fail")
         col1, col2 = st.columns(2)
@@ -114,7 +115,7 @@ def dashboard():
         st.header("🥇 Top ứng viên theo vị trí")
         positions = df['Vị trí'].unique()
         for position in positions:
-            st.subheader(f"Top 3 ứng viên cho vị trí: {position}")
+            st.subheader(f"Top 5 ứng viên cho vị trí: {position}")
             top_candidates_position = df[df['Vị trí'] == position].sort_values('Điểm tổng quát', ascending=False).head(5)
             st.table(top_candidates_position[['Tên ứng viên', 'Điểm tổng quát', 'Trục Năng lực', 'Trục Phù hợp Văn hóa', 'Trục Tương lai', 'Tiêu chí khác', 'Điểm cộng', 'Điểm trừ']])
         
