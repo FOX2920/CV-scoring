@@ -141,16 +141,40 @@ def process_data(data):
     
     return selected_df
 
-def load_and_select_jd(salary):
+def load_job_descriptions():
     jd_df = pd.read_csv('JD_tc.csv')
+    return jd_df
+
+def select_jd(salary, jd_df):
     if salary < 500:
-        return jd_df.iloc[0]['Job_Description']
+        return jd_df.iloc[0]
     elif 500 <= salary < 1000:
-        return jd_df.iloc[1]['Job_Description']
+        return jd_df.iloc[1]
     elif 1000 <= salary < 1500:
-        return jd_df.iloc[2]['Job_Description']
+        return jd_df.iloc[2]
     else:  # salary >= 1500
-        return jd_df.iloc[3]['Job_Description']
+        return jd_df.iloc[3]
+
+def process_data(data):
+    if 'candidates' not in data:
+        st.error("Không tìm thấy ứng viên trong phản hồi.")
+        return None
+    df = pd.DataFrame(data['candidates'])
+    
+    df['cvs'] = df['cvs'].apply(lambda x: x[0] if len(x) > 0 else None)
+    df['cvs'] = df['cvs'].astype(str) 
+    df['title'] = df['title'].apply(lambda x: re.sub(r'<.*?>', '', x) if isinstance(x, str) else x)
+    df['name'] = df['name'].apply(lambda x: unescape(x))
+    df['expect_salary'] = df['form'].apply(extract_salary)
+    df = df[df['cvs'].notnull()]
+    df = df[df['cvs']!="None"]
+    df = df[df['expect_salary'].notnull()]
+    df = df[df['expect_salary']!=""]
+    df = df.dropna(axis=1, how='any')
+    selected_df = df[['id', 'name', 'email', 'status', 'cvs', 'expect_salary']]
+    
+    return selected_df
+
 
 # Main application
 
@@ -260,20 +284,25 @@ with tab2:
                 cv_url = row.get('cvs')
                 expect_salary = row.get('expect_salary', 0)
                 
-                # Select JD based on salary
-                jd = load_and_select_jd(expect_salary)
+                jd_row = select_jd(expect_salary, jd_df)
+                jd = jd_row['Job_Description']
+                position = jd_row['Job_name']
+                plus_minus = jd_row['plus_minus']
                 
                 cv_text = get_cv_text_from_url(cv_url)
-
+        
                 if cv_text:
                     prompt = f"""
                     Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi chính xác theo schema JSON được định nghĩa.
                     Mô tả công việc:
                     {jd}
 
+                    Điểm cộng trừ:
+                    {plus_minus}
+                    
                     CV:
                     {cv_text}
-
+        
                     Vui lòng trả về kết quả đánh giá theo đúng schema JSON đã định nghĩa.
                     Chú ý: Các tiêu chí mà bạn không chắc hoặc không ghi rõ trong CV thì bạn sẽ +0 điểm.
                     """
@@ -281,23 +310,38 @@ with tab2:
                     try:
                         response = get_gemini_response(prompt, cv_text)
                         
+                        main_criteria_score = response["truc_nang_luc"] + response["truc_van_hoa"] + response["truc_tuong_lai"] + response["tieu_chi_khac"]
+                        total_score = main_criteria_score + response["diem_cong"] - response["diem_tru"]
+                        
+                        # Determine pass/fail based on salary and main criteria score
+                        if expect_salary < 500:
+                            pass_fail = "Pass" if main_criteria_score >= 70 else "Fail"
+                        elif 500 <= expect_salary < 1000:
+                            pass_fail = "Pass" if main_criteria_score >= 75 else "Fail"
+                        elif 1000 <= expect_salary < 1500:
+                            pass_fail = "Pass" if main_criteria_score >= 80 else "Fail"
+                        else:  # expect_salary >= 1500
+                            pass_fail = "Pass" if main_criteria_score >= 85 else "Fail"
+        
                         uv = {
                             'Tên ứng viên': name,
+                            'Vị trí': position,
                             'Trục Năng lực': response["truc_nang_luc"],
                             'Trục Phù hợp Văn hóa': response["truc_van_hoa"],
                             'Trục Tương lai': response["truc_tuong_lai"],
                             'Tiêu chí khác': response["tieu_chi_khac"],
                             'Điểm cộng': response["diem_cong"],
                             'Điểm trừ': response["diem_tru"],
-                            'Điểm tổng quát': response["truc_nang_luc"] + response["truc_van_hoa"] + response["truc_tuong_lai"] + response["tieu_chi_khac"] + response["diem_cong"] - response["diem_tru"], 
+                            'Điểm tổng quát': total_score,
+                            'Đánh giá': pass_fail,
                             'Tóm tắt': response["tom_tat"]
                         }
-
+        
                         results.append(uv)
-
+        
                     except Exception as e:
                         st.error(f"❌ Lỗi khi xử lý CV từ {cv_url}: {str(e)}")
-
+        
                 progress_bar.progress((i + 1) / len(df))
 
             if results:
@@ -326,7 +370,7 @@ with tab2:
                 )
             else:
                 st.warning("⚠️ Không có kết quả nào được tạo. Vui lòng kiểm tra API key và thử lại.")
-
+                
 with tab3:
     dashboard()
 
