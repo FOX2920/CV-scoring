@@ -5,28 +5,40 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 def plot_candidate_radar(df, candidate_name):
-    categories = ['Trục Năng lực','Trục Phù hợp Văn hóa','Trục Tương lai','Tiêu chí khác','Điểm cộng','Điểm trừ']
+    categories = ['Trục Năng lực', 'Trục Phù hợp Văn hóa', 'Trục Tương lai', 'Tiêu chí khác', 'Điểm cộng', 'Điểm trừ']
     candidate_data = df[df['Tên ứng viên'] == candidate_name][categories].values[0]
-    
-    fig = go.Figure(data=go.Scatterpolar(
+
+    # Create the radar chart in the same style as the comparison chart
+    fig = go.Figure()
+
+    # Add trace for the selected candidate
+    fig.add_trace(go.Scatterpolar(
         r=candidate_data,
         theta=categories,
         fill='toself',
-        marker=dict(color='blue'),  # Adjust color for better contrast
-        line=dict(color='blue')  # Adjust line color for visibility
+        name=candidate_name,
+        marker=dict(color='blue'),  # Consistent color with comparison chart
+        line=dict(color='blue')  # Consistent line color
     ))
     
+    # Update layout to match the comparison chart
     fig.update_layout(
         polar=dict(
-            radialaxis=dict(visible=True, range=[0, 10]),
-            angularaxis=dict(tickfont=dict(size=12, color='red'))  # Customize tick labels
+            radialaxis=dict(visible=True, range=[0, 10])  # Same range for individual and comparison charts
         ),
         title=dict(text=f"Biểu đồ kỹ năng của {candidate_name}", font=dict(size=16, color='white')),
-        font=dict(size=14, color='black'),  # Customize general font size and color
-        showlegend=False
+        showlegend=True,  # Optional: You can show or hide legend here
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
     )
     
     return fig
+
 
 def dashboard():
     st.header("📈 Dashboard Phân tích Ứng viên")
