@@ -202,7 +202,7 @@ st.sidebar.markdown("""
 with st.sidebar.expander("🔍 Hướng dẫn sử dụng chức năng Lấy Thông Tin Ứng Viên", expanded=False):
     st.markdown("""
     1. Chuyển đến tab "Lấy Thông Tin Ứng Viên".
-    2. Nhập URL danh sách ứng viên từ hệ thống tuyển dụng. URL phải có định dạng:
+    2. Nhập URL danh sách ứng viên từ hệ thống tuyển dụng Base. URL phải có định dạng:
        `https://hiring.base.vn/opening/candidates/[opening_id]?stage=[stage_id]`
     3. Nhấp vào nút "Lấy Thông Tin Ứng Viên" để bắt đầu quá trình.
     4. Thông tin ứng viên sẽ được hiển thị trong một bảng và bạn có thể tải xuống dưới dạng file CSV.
@@ -211,9 +211,11 @@ with st.sidebar.expander("🔍 Hướng dẫn sử dụng chức năng Lấy Th�
 with st.sidebar.expander("📊 Hướng dẫn sử dụng chức năng Đánh giá CV", expanded=False):
     st.markdown("""
     1. Chuyển đến tab "Đánh giá CV".
-    2. Nhập JD(Job description) công việc mà bạn muốn đánh giá.
-    3. Tải lên file CSV chứa thông tin CV. File CSV cần có cột "name" (tên ứng viên) và "cvs" (link đến file CV).
-    4. Nhấn "Đánh Giá CV" để bắt đầu. Hệ thống sẽ trả về kết quả đánh giá chi tiết, bao gồm điểm số và tóm tắt.
+    2. Tải lên file CSV chứa thông tin CV. File CSV cần có các cột sau:
+       - "name" (tên ứng viên)
+       - "cvs" (link đến file CV)
+       - "expect_salary" (mức lương mong muốn)
+    3. Nhấn "Đánh Giá CV" để bắt đầu. Hệ thống sẽ tự động chọn JD phù hợp dựa trên mức lương mong muốn và trả về kết quả đánh giá chi tiết, bao gồm điểm số và tóm tắt.
     """)
 
 with st.sidebar.expander("📈 Hướng dẫn sử dụng chức năng Dashboard", expanded=False):
@@ -226,9 +228,9 @@ with st.sidebar.expander("📈 Hướng dẫn sử dụng chức năng Dashboard
 
 st.sidebar.warning("""
 **⚠️ Lưu ý:**
-- Đảm bảo bạn có quyền truy cập vào các file CV được liên kết trong file CSV và vào hệ thống tuyển dụng.
+- Đảm bảo bạn có quyền truy cập vào các file CV được liên kết trong file CSV và vào hệ thống tuyển dụng Base.
 - Công cụ này dùng để hỗ trợ quyết định, không thay thế đánh giá của chuyên gia HR.
-- Nếu gặp lỗi, kiểm tra lại cấu hình biến môi trường GOOGLE_API_KEY, định dạng file CSV, URL danh sách ứng viên.
+- Nếu gặp lỗi, kiểm tra lại cấu hình biến môi trường GOOGLE_API_KEY và BASE_API_KEY, định dạng file CSV, URL danh sách ứng viên.
 - Bảo mật thông tin ứng viên và tuân thủ các quy định về bảo vệ dữ liệu cá nhân.
 """)
 
