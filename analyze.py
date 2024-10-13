@@ -4,6 +4,30 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+def plot_candidate_radar(df, candidate_name):
+    categories = ['Trục Năng lực','Trục Phù hợp Văn hóa','Trục Tương lai','Tiêu chí khác','Điểm cộng','Điểm trừ']
+    candidate_data = df[df['Tên ứng viên'] == candidate_name][categories].values[0]
+    
+    fig = go.Figure(data=go.Scatterpolar(
+        r=candidate_data,
+        theta=categories,
+        fill='toself',
+        marker=dict(color='blue'),  # Adjust color for better contrast
+        line=dict(color='blue')  # Adjust line color for visibility
+    ))
+    
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 10]),
+            angularaxis=dict(tickfont=dict(size=12, color='red'))  # Customize tick labels
+        ),
+        title=dict(text=f"Biểu đồ kỹ năng của {candidate_name}", font=dict(size=16, color='white')),
+        font=dict(size=14, color='black'),  # Customize general font size and color
+        showlegend=False
+    )
+    
+    return fig
+
 def dashboard():
     st.header("📈 Dashboard Phân tích Ứng viên")
 
@@ -75,26 +99,34 @@ def dashboard():
                                             color_discrete_map={"Pass": "green", "Fail": "red"})
             st.plotly_chart(fig_pass_fail_position, use_container_width=True)
         
-        st.header("🎯 So sánh ứng viên")
-        selected_candidates = st.multiselect("Chọn ứng viên để so sánh (tối đa 5)", df['Tên ứng viên'].tolist(), max_selections=5)
-        if len(selected_candidates) > 1:
-            fig_candidate_comparison = go.Figure()
-            categories = ['Trục Năng lực', 'Trục Phù hợp Văn hóa', 'Trục Tương lai', 'Tiêu chí khác', 'Điểm cộng', 'Điểm trừ']
+        st.header("🎯 Biểu đồ kỹ năng ứng viên")
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            selected_candidate = st.selectbox("Chọn ứng viên", df['Tên ứng viên'].tolist())
+            candidate_data = df[df['Tên ứng viên'] == selected_candidate].iloc[0]
             
-            for candidate in selected_candidates:
-                candidate_data = df[df['Tên ứng viên'] == candidate][categories].values[0]
-                fig_candidate_comparison.add_trace(go.Scatterpolar(
-                    r=candidate_data,
-                    theta=categories,
-                    fill='toself',
-                    name=candidate
-                ))
-            
-            fig_candidate_comparison.update_layout(
-                polar=dict(radialaxis=dict(visible=True, range=[0, 40])),
-                title="So sánh ứng viên"
-            )
-            st.plotly_chart(fig_candidate_comparison, use_container_width=True)
+            # Create a figure for candidate information
+            fig_info = go.Figure(data=[go.Table(
+                header=dict(values=['Thông tin', 'Giá trị'],
+                            fill_color='paleturquoise',
+                            align='left'),
+                cells=dict(values=[['Tên', 'Vị trí', 'Điểm tổng quát', 'Mức lương mong muốn'],
+                                   [candidate_data['Tên ứng viên'],
+                                    candidate_data['Vị trí'],
+                                    f"{candidate_data['Điểm tổng quát']:.2f}",
+                                    f"{candidate_data['Mức lương mong muốn']:,.0f}"]],
+                           fill_color='lavender',
+                           align='left'))
+            ])
+            fig_info.update_layout(title="Thông tin ứng viên", height=200, margin=dict(l=0, r=0, t=30, b=0))
+            st.plotly_chart(fig_info, use_container_width=True)
+    
+            candidate_summary = candidate_data['Tóm tắt']
+            st.subheader("Tóm tắt ứng viên")
+            st.write(candidate_summary)
+        with col2:
+            st.plotly_chart(plot_candidate_radar(df, selected_candidate), use_container_width=True)
+
         
         st.header("🔍 Lọc và Sắp xếp ứng viên")
         col1, col2, col3 = st.columns(3)
