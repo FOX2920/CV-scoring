@@ -111,9 +111,12 @@ def dashboard():
         
         st.dataframe(filtered_df[['Tên ứng viên', 'Vị trí', 'Điểm tổng quát', 'Mức lương mong muốn', 'Đánh giá']])
         
-        st.header("🏆 Top ứng viên")
-        top_candidates = df.sort_values('Điểm tổng quát', ascending=False).head(5)
-        st.table(top_candidates[['Tên ứng viên', 'Vị trí', 'Điểm tổng quát', 'Trục Năng lực', 'Trục Phù hợp Văn hóa', 'Trục Tương lai', 'Tiêu chí khác', 'Điểm cộng', 'Điểm trừ']])
+        st.header("🥇 Top ứng viên theo vị trí")
+        positions = df['Vị trí'].unique()
+        for position in positions:
+            st.subheader(f"Top 3 ứng viên cho vị trí: {position}")
+            top_candidates_position = df[df['Vị trí'] == position].sort_values('Điểm tổng quát', ascending=False).head(5)
+            st.table(top_candidates_position[['Tên ứng viên', 'Điểm tổng quát', 'Trục Năng lực', 'Trục Phù hợp Văn hóa', 'Trục Tương lai', 'Tiêu chí khác', 'Điểm cộng', 'Điểm trừ']])
         
         st.header("📋 Dữ liệu chi tiết")
         st.dataframe(df)
