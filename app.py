@@ -287,7 +287,6 @@ with tab2:
                 jd_row = select_jd(expect_salary, jd_df)
                 jd = jd_row['Job_Description']
                 position = jd_row['Job_name']
-                plus_minus = jd_row['plus_minus']
                 
                 cv_text = get_cv_text_from_url(cv_url)
         
@@ -297,8 +296,23 @@ with tab2:
                     Mô tả công việc:
                     {jd}
 
-                    Điểm cộng trừ:
-                    {plus_minus}
+                    Điểm trừ ( mỗi tiêu chí +5 điểm) nếu hồ sơ có các điểm sau : 
+                    1.	Thiếu kinh nghiệm: Không có đủ kinh nghiệm làm việc liên quan đến vị trí ứng tuyển cho các vị trí nhân viên trở lên. 
+                    2.	Lỗi chính tả và ngữ pháp: Hồ sơ có nhiều lỗi chính tả hoặc ngữ pháp, thể hiện sự thiếu cẩn thận.
+                    3.	Thời gian nghỉ việc dài: Có khoảng thời gian dài không làm việc mà không có lý do rõ ràng.
+                    4.	Thay đổi công việc thường xuyên: Có nhiều lần thay đổi công việc trong thời gian ngắn, có thể gây lo ngại về tính ổn định.
+                    5.	Thiếu thông tin quan trọng: Hồ sơ không cung cấp đủ thông tin về quá trình học tập, kinh nghiệm làm việc hoặc kỹ năng.
+                    6.	Thiếu thông tin liên hệ: Không cung cấp thông tin liên lạc đầy đủ hoặc chính xác.
+                    7.	Không rõ ràng về mục tiêu nghề nghiệp: Mục tiêu nghề nghiệp không rõ ràng hoặc không phù hợp với vị trí ứng tuyển.
+                    8.	Thái độ không chuyên nghiệp: Sử dụng ngôn ngữ không phù hợp hoặc có những bình luận tiêu cực về công việc trước đây.
+                    
+                    Điểm cộng  ( Mỗi tiêu chí +5 điểm ) nếu hồ sơ thể hiện : 
+                    1.	Kinh nghiệm làm việc phong phú: Có nhiều năm kinh nghiệm trong lĩnh vực liên quan hoặc trong các vị trí tương tự.
+                    2.	Kỹ năng chuyên môn mạnh: Sở hữu các kỹ năng chuyên môn cần thiết cho công việc, như kỹ năng phân tích, lập trình, hay quản lý dự án.
+                    3.	Chứng chỉ và bằng cấp phù hợp: Có các chứng chỉ và bằng cấp liên quan đến vị trí ứng tuyển, thể hiện sự cam kết trong nghề nghiệp.
+                    4.	Kỹ năng giao tiếp tốt:  Khả năng giao tiếp rõ ràng và hiệu quả, có thể làm việc với nhiều đối tượng khác nhau.
+                    5.	Thành tích nổi bật: Có thành tích đáng chú ý trong công việc trước đây, như tăng hiệu quả, cải thiện quy trình làm việc, hoặc dự án thành công.
+                    6.	Thái độ tích cực và chuyên nghiệp: Thể hiện sự nhiệt tình, trách nhiệm và thái độ tích cực trong công việc.
                     
                     CV:
                     {cv_text}
@@ -306,7 +320,7 @@ with tab2:
                     Vui lòng trả về kết quả đánh giá theo đúng schema JSON đã định nghĩa.
                     Chú ý: Các tiêu chí mà bạn không chắc hoặc không ghi rõ trong CV thì bạn sẽ +0 điểm.
                     """
-                    prompt = ' '.join(prompt.split())
+                    #prompt = ' '.join(prompt.split())
                     try:
                         response = get_gemini_response(prompt, cv_text)
                         
