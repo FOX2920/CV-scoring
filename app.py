@@ -20,7 +20,7 @@ def is_valid_url(url):
 
 def load_job_descriptions(csv_file):
     df = pd.read_csv(csv_file)
-    return dict(zip(df['Job_name'], df['Job_Description']))
+    return dict(zip(df['Position'], df['Job_Description']))
 
 def get_pdf_text_from_url(url):
     try:
@@ -287,7 +287,7 @@ with tab2:
                 
                 jd_row = select_jd(expect_salary, jd_df)
                 jd = jd_row['Job_Description']
-                position = jd_row['Job_name']
+                position = jd_row['Position']
                 
                 cv_text = get_cv_text_from_url(cv_url)
         
