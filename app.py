@@ -276,6 +276,7 @@ with tab2:
             st.error("❌ Vui lòng tải lên file CSV chứa link CV.")
         else:
             df = pd.read_csv(uploaded_file)
+            jd_df = load_job_descriptions()
             results = []
             progress_bar = st.progress(0)
             
