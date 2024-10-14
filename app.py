@@ -78,7 +78,7 @@ def get_gemini_response1(prompt, content):
                                         "response_schema": cleaned_schema # Dùng schema đã làm sạch
                                     }
                                     )
-    get_gemini_response2(prompt, content):
+def get_gemini_response2(prompt, content):
     model = genai.GenerativeModel('gemini-1.5-flash',
                                     generation_config={
                                         "response_mime_type": "application/json",
