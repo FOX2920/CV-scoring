@@ -376,7 +376,7 @@ with tab1:
             if results:
                 st.subheader("📊 Kết quả đánh giá CV")
                 df_results = pd.DataFrame(results)
-                final_df = pd.merge(df, df_results, left_on='name', right_on='Tên ứng viên', how='inner')
+                final_df = pd.merge(data, df_results, left_on='name', right_on='Tên ứng viên', how='inner')
                 final_df.drop(columns=['Tên ứng viên'], inplace=True)
                 final_df.rename(columns={
                     'id': 'Mã ứng viên',
