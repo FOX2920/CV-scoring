@@ -260,6 +260,7 @@ with tab1:
                 st.header("📊 Đánh giá và Lọc CV")
                 jd_df = pd.read_csv('JD_tc.csv')
                 jd2 = fetch_jd(candidate_url, access_token)
+                st.markdown(jd2)
                 results = []
                 progress_bar = st.progress(0)
                     
