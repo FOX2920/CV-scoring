@@ -32,7 +32,7 @@ cleaned_schema = {
             "description": "Tóm tắt điểm mạnh và điểm yếu chính của ứng viên dựa trên CV với công việc trong JD trong 2 hoặc 3 câu."
         }
     },
-    "required": ["truc_nang_luc", "truc_van_hoa", "truc_tuong_lai", "tieu_chi_khac", "tom_tat"]
+    "required": ["truc_nang_luc", "truc_van_hoa", "truc_tuong_lai", "tieu_chi_khac", "diem_cong", "diem_tru", "tom_tat"]
 }
 
 new_schema = {
