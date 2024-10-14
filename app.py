@@ -119,13 +119,13 @@ def fetch_data(job_url, access_token):
 # Extract numeric value from 'expect_salary' (e.g., '2,000 (USD/tháng)' => 2000)
 def extract_numeric_salary(salary):
     match = re.search(r'(\d{1,3}(?:,\d{3})*)', salary)
-    return int(match.group(1).replace(',', '')) if match else None
+    return int(match.group(1).replace(',', '')) if match else 0
 # Extract 'Mức lương mong muốn' (expected salary) from the 'fields' column
 def extract_salary(fields):
     for field in fields:
-        if field.get('id') == 'muc_luong_mong_muon':
+        if field.get('id') == 'muc_luong_mong_muon':  
             return extract_numeric_salary(field.get('value'))
-    return None
+    return 0
 
 def process_data(data):
     if 'candidates' not in data:
@@ -142,8 +142,8 @@ def process_data(data):
     df = df[df['cvs'].notnull()]
     df = df[df['cvs']!="None"]
     # Save to CSV
-    df = df[df['expect_salary'].notnull()]
-    df = df[df['expect_salary']!=""]
+    # df = df[df['expect_salary'].notnull()]
+    # df = df[df['expect_salary']!=""]
     df = df.dropna(axis=1, how='any')
     selected_df = df[['id', 'name', 'email', 'status', 'cvs', 'expect_salary']]
     
@@ -289,18 +289,14 @@ with tab1:
                 for i, (_, row) in enumerate(data.iterrows()):
                     name = row['name']
                     cv_url = row['cvs']
-                    cv_text = get_pdf_text_from_url(cv_url)
-                    name = row['name']
-                    cv_url = row.get('cvs')
                     expect_salary = row.get('expect_salary', 0)
-                    
                     jd_row = select_jd(expect_salary, jd_df)
                     jd1 = jd_row['Job_Description']
                     position = jd_row['Position']
                     
                     cv_text = get_cv_text_from_url(cv_url)
             
-                    if cv_text:
+                    if cv_text:    
                         prompt1 = f"""
                         Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi chính xác theo schema JSON được định nghĩa.
                         Mô tả công việc:
@@ -363,22 +359,35 @@ with tab1:
                             """
                         prompt2 = ' '.join(prompt2.split())
                         try:
-                            response1 = get_gemini_response1(prompt1, cv_text)
-                            time.sleep(2)
                             response2 = get_gemini_response2(prompt2, cv_text)
-                            
-                            main_criteria_score = response1["truc_nang_luc"] + response1["truc_van_hoa"] + response1["truc_tuong_lai"] + response1["tieu_chi_khac"]+ response1["diem_cong"] - response1["diem_tru"]
-                            
-                            # Determine pass/fail based on salary and main criteria score
-                            if expect_salary < 500:
-                                pass_fail = "Pass" if main_criteria_score >= 70 else "Fail"
-                            elif 500 <= expect_salary < 1000:
-                                pass_fail = "Pass" if main_criteria_score >= 75 else "Fail"
-                            elif 1000 <= expect_salary < 1500:
-                                pass_fail = "Pass" if main_criteria_score >= 80 else "Fail"
-                            else:  # expect_salary >= 1500
-                                pass_fail = "Pass" if main_criteria_score >= 85 else "Fail"
-            
+                            time.sleep(2)
+                            if expect_salary > 0:
+                                response1 = get_gemini_response1(prompt1, cv_text)
+                                main_criteria_score = response1["truc_nang_luc"] + response1["truc_van_hoa"] + response1["truc_tuong_lai"] + response1["tieu_chi_khac"] + response1["diem_cong"] - response1["diem_tru"]
+                                
+                                # Determine pass/fail based on salary and main criteria score
+                                if 0 < expect_salary < 500:
+                                    pass_fail = "Pass" if main_criteria_score >= 70 else "Fail"
+                                elif 500 <= expect_salary < 1000:
+                                    pass_fail = "Pass" if main_criteria_score >= 75 else "Fail"
+                                elif 1000 <= expect_salary < 1500:
+                                    pass_fail = "Pass" if main_criteria_score >= 80 else "Fail"
+                                else:  # expect_salary >= 1500
+                                    pass_fail = "Pass" if main_criteria_score >= 85 else "Fail"
+                            else:
+                                # Set all response1 criteria to 0 when expect_salary is 0
+                                response1 = {
+                                    "truc_nang_luc": 0,
+                                    "truc_van_hoa": 0,
+                                    "truc_tuong_lai": 0,
+                                    "tieu_chi_khac": 0,
+                                    "diem_cong": 0,
+                                    "diem_tru": 0,
+                                    "tom_tat": "Không có mức lương kỳ vọng để đánh giá"
+                                }
+                                main_criteria_score = 0
+                                pass_fail = "N/A"
+                        
                             uv = {
                                 'Tên ứng viên': name,
                                 'Vị trí': position,
@@ -396,12 +405,12 @@ with tab1:
                                 'Kinh nghiệm hard skill': response2["kinh_nghiem"],
                                 'Trình độ học vấn hard skill': response2["trinh_do_hoc_van"],
                                 'Kỹ năng mềm hard skill': response2["ky_nang_mem"],
-                                'Điểm tổng quát hard skill': round( response2["diem_tong_quat"], 2),
+                                'Điểm tổng quát hard skill': round(response2["diem_tong_quat"], 2),
                                 'Tóm tắt hard skill': response2["tom_tat"]
                             }
-            
+                        
                             results.append(uv)
-            
+                        
                         except Exception as e:
                             st.error(f"❌ Lỗi khi xử lý CV từ {cv_url}: {str(e)}")
             
