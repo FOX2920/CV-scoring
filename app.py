@@ -11,7 +11,7 @@ from html import unescape
 import json
 from docx import Document
 from analyze import dashboard
-from config import cleaned_schema
+from config import cleaned_schema, cleaned_schema_2
 
 # Function definitions
 def is_valid_url(url):
@@ -71,11 +71,18 @@ def get_cv_text_from_url(cv_url):
         print(f"Unsupported file format for URL: {cv_url}")
         return None
 
-def get_gemini_response(prompt, content):
+def get_gemini_response1(prompt, content):
     model = genai.GenerativeModel('gemini-1.5-flash',
                                     generation_config={
                                         "response_mime_type": "application/json",
                                         "response_schema": cleaned_schema # Dùng schema đã làm sạch
+                                    }
+                                    )
+    get_gemini_response2(prompt, content):
+    model = genai.GenerativeModel('gemini-1.5-flash',
+                                    generation_config={
+                                        "response_mime_type": "application/json",
+                                        "response_schema": cleaned_schema_2 # Dùng schema đã làm sạch
                                     }
                                     )
 
@@ -288,16 +295,16 @@ with tab2:
                 expect_salary = row.get('expect_salary', 0)
                 
                 jd_row = select_jd(expect_salary, jd_df)
-                jd = jd_row['Job_Description']
+                jd1 = jd_row['Job_Description']
                 position = jd_row['Position']
                 
                 cv_text = get_cv_text_from_url(cv_url)
         
                 if cv_text:
-                    prompt = f"""
+                    prompt1 = f"""
                     Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi chính xác theo schema JSON được định nghĩa.
                     Mô tả công việc:
-                    {jd}
+                    {jd1}
 
                     Điểm trừ ( mỗi tiêu chí +5 điểm) nếu hồ sơ có các điểm sau : 
                     1.	Thiếu kinh nghiệm: Không có đủ kinh nghiệm làm việc liên quan đến vị trí ứng tuyển cho các vị trí nhân viên trở lên. 
@@ -323,12 +330,45 @@ with tab2:
                     Vui lòng trả về kết quả đánh giá theo đúng schema JSON đã định nghĩa.
                     Chú ý: Các tiêu chí mà bạn không chắc hoặc không ghi rõ trong CV thì bạn sẽ +0 điểm.
                     """
-                    #prompt = ' '.join(prompt.split())
-                    try:
-                        response = get_gemini_response(prompt, cv_text)
+                    prompt1 = ' '.join(prompt1.split())
+                    # prompt 2
+                    prompt2 = f"""
+                        Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi **chính xác** theo định dạng dưới đây mà không thêm bất kỳ thông tin nào khác.
+                        Các tiêu chí đánh giá bao gồm:
                         
-                        main_criteria_score = response["truc_nang_luc"] + response["truc_van_hoa"] + response["truc_tuong_lai"] + response["tieu_chi_khac"]
-                        total_score = main_criteria_score + response["diem_cong"] - response["diem_tru"]
+                        1. **Mức độ phù hợp với vai trò** (trên thang điểm 0-10): Đánh giá mức độ phù hợp của kinh nghiệm và trình độ của ứng viên so với trách nhiệm công việc.
+                        2. **Kỹ năng kỹ thuật** (trên thang điểm 0-10): Đánh giá mức độ thành thạo của ứng viên đối với các kỹ năng kỹ thuật được yêu cầu trong mô tả công việc.
+                        3. **Kinh nghiệm** (trên thang điểm 0-10): Đánh giá kinh nghiệm của ứng viên về số năm và tính phù hợp với vai trò.
+                        4. **Trình độ học vấn** (trên thang điểm 0-10): Đánh giá trình độ học vấn của ứng viên so với yêu cầu công việc.
+                        5. **Kỹ năng mềm** (trên thang điểm 0-10): Đánh giá các kỹ năng mềm của ứng viên như giao tiếp, làm việc nhóm, và lãnh đạo.
+                        
+                        Sau khi đánh giá, cung cấp phản hồi **chính xác** theo định dạng dưới đây, không thêm bất kỳ nội dung nào khác:
+                        
+                        **Định dạng phản hồi:**
+                        - Mức độ phù hợp: [điểm trên 10]
+                        - Kỹ năng kỹ thuật: [điểm trên 10]
+                        - Kinh nghiệm: [điểm trên 10]
+                        - Trình độ học vấn: [điểm trên 10]
+                        - Kỹ năng mềm: [điểm trên 10]
+                        - Điểm tổng quát: [điểm tổng quát trên 10]
+                        - Tóm tắt: [giải thích ngắn gọn về điểm mạnh và điểm yếu của ứng viên]
+                        
+                        **Mô tả công việc:**
+                        {jd2}
+                        
+                        **CV:**
+                        {cv_text}
+                        
+                        Vui lòng chỉ trả về các thông tin được yêu cầu trong đúng định dạng trên, không thêm bất kỳ thông tin hoặc nhận xét nào khác.
+                        """
+                    prompt2 = ' '.join(prompt2.split())
+                    try:
+                        response1 = get_gemini_response1(prompt1, cv_text)
+                        time.sleep(2)
+                        response2 = get_gemini_response2(prompt2, cv_text)
+                        
+                        main_criteria_score = response1["truc_nang_luc"] + response1["truc_van_hoa"] + response1["truc_tuong_lai"] + response1["tieu_chi_khac"]
+                        total_score = main_criteria_score + response1["diem_cong"] - response1["diem_tru"]
                         
                         # Determine pass/fail based on salary and main criteria score
                         if expect_salary < 500:
@@ -343,15 +383,22 @@ with tab2:
                         uv = {
                             'Tên ứng viên': name,
                             'Vị trí': position,
-                            'Trục Năng lực': response["truc_nang_luc"],
-                            'Trục Phù hợp Văn hóa': response["truc_van_hoa"],
-                            'Trục Tương lai': response["truc_tuong_lai"],
-                            'Tiêu chí khác': response["tieu_chi_khac"],
-                            'Điểm cộng': response["diem_cong"],
-                            'Điểm trừ': response["diem_tru"],
-                            'Điểm tổng quát': total_score,
-                            'Đánh giá': pass_fail,
-                            'Tóm tắt': response["tom_tat"]
+                            'Trục Năng lực soft skill': response1["truc_nang_luc"],
+                            'Trục Phù hợp Văn hóa soft skill': response1["truc_van_hoa"],
+                            'Trục Tương lai soft skill': response1["truc_tuong_lai"],
+                            'Tiêu chí khác soft skill': response1["tieu_chi_khac"],
+                            'Điểm cộng soft skill': response1["diem_cong"],
+                            'Điểm trừ soft skill': response1["diem_tru"],
+                            'Điểm tổng quát soft skill': total_score,
+                            'Đánh giá soft skill': pass_fail,
+                            'Tóm tắt soft skill': response1["tom_tat"],
+                            'Mức độ phù hợp hard skill': int((str(response2).split('\n')[0]).split(':')[1].strip()),
+                            'Kỹ năng kỹ thuật hard skill': int((str(response2).split('\n')[1]).split(':')[1].strip()),
+                            'Kinh nghiệm hard skill': int((str(response2).split('\n')[2]).split(':')[1].strip()),
+                            'Trình độ học vấn hard skill': int((str(response2).split('\n')[3]).split(':')[1].strip()),
+                            'Kỹ năng mềm hard skill': int((str(response2).split('\n')[4]).split(':')[1].strip()),
+                            'Điểm tổng quát hard skill': round(float((str(response2).split('\n')[5]).split(':')[1].strip()), 2),
+                            'Tóm tắt hard skill': (str(response2).split('\n')[6]).split(':')[1].strip()
                         }
         
                         results.append(uv)
