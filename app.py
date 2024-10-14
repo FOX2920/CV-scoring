@@ -73,14 +73,14 @@ def get_cv_text_from_url(cv_url):
         return None
 
 def get_gemini_response1(prompt, content):
-    model = genai.GenerativeModel('gemini-1.5-flash',
+    model = genai.GenerativeModel('models/gemini-1.5-flash-latest',
                                     generation_config={
                                         "response_mime_type": "application/json",
                                         "response_schema": cleaned_schema # Dùng schema đã làm sạch
                                     }
                                     )
 def get_gemini_response2(prompt, content):
-    model = genai.GenerativeModel('gemini-1.5-flash',
+    model = genai.GenerativeModel('models/gemini-1.5-flash-latest',
                                     generation_config={
                                         "response_mime_type": "application/json",
                                         "response_schema": new_schema # Dùng schema đã làm sạch
