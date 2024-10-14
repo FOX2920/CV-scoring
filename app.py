@@ -149,10 +149,6 @@ def process_data(data):
     
     return selected_df
 
-def load_job_descriptions():
-    jd_df = pd.read_csv('JD_tc.csv')
-    return jd_df
-
 def fetch_jd(job_url, access_token):
     opening_id, stage_id = extract_ids_from_url(job_url)
     if not opening_id or not stage_id:
@@ -272,7 +268,7 @@ st.sidebar.success("✨ Chúc bạn sử dụng công cụ hiệu quả!")
 tab1, tab3 = st.tabs(["🔍 Lấy Dữ Liệu Ứng Viên và 📊 Đánh giá CV", "📈 Dashboard"])
     
 with tab1:
-    st.header("🔍 Lấy Dữ Liệu Ứng Viên và  📊Lọc CV")
+    st.header("🔍 Lấy Dữ Liệu Ứng Viên")
     
     candidate_url = st.text_input("🔗 Nhập URL danh sách ứng viên:")
     access_token = os.getenv('BASE_API_KEY')
@@ -282,6 +278,7 @@ with tab1:
                 data = process_data(fetch_data(candidate_url, access_token))
                 st.success("✅ Đã lấy thông tin ứng viên thành công!")
                 st.header("📊 Đánh giá và Lọc CV")
+                jd_df = pd.read_csv('JD_tc.csv')
                 jd2 = fetch_jd(candidate_url, access_token)
                 results = []
                 progress_bar = st.progress(0)
