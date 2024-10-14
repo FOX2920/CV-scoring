@@ -1,9 +1,11 @@
+# config.py
+
 cleaned_schema = {
     "type": "object",
     "properties": {
         "truc_nang_luc": {
             "type": "integer",
-            "description": "Đánh giá mức độ theo  Trục Năng lực trong JD theo điểm từ khoảng từ 0 đến 40.",
+            "description": "Đánh giá mức độ theo Trục Năng lực trong JD theo điểm từ khoảng từ 0 đến 40.",
         },
         "truc_van_hoa": {
             "type": "integer",
@@ -19,7 +21,7 @@ cleaned_schema = {
         },
         "diem_cong": {
             "type": "integer",
-            "description": "Đánh giá mức độ theo mục Điểm cộng của Ứng viên trong JD từ khoảng từ 0 đến 30 (mỗi tiêu chí 5 điểm)  .",
+            "description": "Đánh giá mức độ theo mục Điểm cộng của Ứng viên trong JD từ khoảng từ 0 đến 30 (mỗi tiêu chí 5 điểm).",
         },
         "diem_tru": {
             "type": "integer",
@@ -50,7 +52,7 @@ new_schema = {
         },
         "trinh_do_hoc_van": {
             "type": "integer",
-            "description": "Đánh giá học vấn của ứng viên, xem xét mức độ đáp ứng yêu cầu của công việctrong khoảng từ 0 đến 10.",
+            "description": "Đánh giá học vấn của ứng viên, xem xét mức độ đáp ứng yêu cầu của công việc trong khoảng từ 0 đến 10.",
         },
         "ky_nang_mem": {
             "type": "integer",
