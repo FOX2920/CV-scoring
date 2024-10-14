@@ -172,7 +172,7 @@ def dashboard():
             filtered_df = filtered_df[filtered_df['Vị trí'].isin(selected_position)]
         filtered_df = filtered_df.sort_values(sort_by, ascending=False)
         
-        st.dataframe(filtered_df[['Tên ứng viên', 'Điểm tổng quát hard skill', 'Mức lương mong muốn', 'Vị trí', 'Điểm tổng quát soft skill',  'Đánh giá soft skill']])
+        st.dataframe(filtered_df[['Tên ứng viên', 'Điểm tổng quát hard skill', 'Tóm tắt hard skill', 'Mức lương mong muốn', 'Vị trí', 'Điểm tổng quát soft skill', 'Tóm tắt soft skill', 'Đánh giá soft skill']])
         st.header("🥇 Top ứng viên theo vị trí")
         positions = df['Vị trí'].unique()
         for position in positions:
