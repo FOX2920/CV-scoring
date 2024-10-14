@@ -11,7 +11,7 @@ from html import unescape
 import json
 from docx import Document
 from analyze import dashboard
-from config import cleaned_schema, cleaned_schema_2
+from config import cleaned_schema, new_schema
 
 # Function definitions
 def is_valid_url(url):
@@ -82,7 +82,7 @@ def get_gemini_response2(prompt, content):
     model = genai.GenerativeModel('gemini-1.5-flash',
                                     generation_config={
                                         "response_mime_type": "application/json",
-                                        "response_schema": cleaned_schema_2 # Dùng schema đã làm sạch
+                                        "response_schema": new_schema # Dùng schema đã làm sạch
                                     }
                                     )
 
