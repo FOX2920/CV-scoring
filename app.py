@@ -11,6 +11,7 @@ from html import unescape
 import json
 from docx import Document
 from analyze import dashboard
+from bs4 import BeautifulSoup
 from config import cleaned_schema, new_schema
 
 # Function definitions
@@ -152,6 +153,30 @@ def load_job_descriptions():
     jd_df = pd.read_csv('JD_tc.csv')
     return jd_df
 
+def fetch_jd(job_url, access_token):
+    opening_id, stage_id = extract_ids_from_url(job_url)
+    if not opening_id or not stage_id:
+        st.error("URL không hợp lệ. Không thể trích xuất opening_id và stage_id.")
+        return None
+    api_url = "https://hiring.base.vn/publicapi/v2/opening/get"
+    payload = {
+        'access_token': access_token,
+        'id': opening_id,
+    }
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    response = requests.post(api_url, headers=headers, data=payload)
+     # Parse the JSON response
+    json_response = response.json()
+    
+    # Get the 'content' field
+    html_content = json_response.get('opening', {}).get('content', '')
+    
+    # Use BeautifulSoup to convert HTML content to plain text
+    soup = BeautifulSoup(html_content, "html.parser")
+    plain_text = soup.get_text()
+   
+    return plain_text
+
 def select_jd(salary, jd_df):
     if salary < 500:
         return jd_df.iloc[0]
@@ -244,170 +269,144 @@ st.sidebar.warning("""
 st.sidebar.success("✨ Chúc bạn sử dụng công cụ hiệu quả!")
 
 # Tabs for different functionalities
-tab1, tab2, tab3 = st.tabs(["🔍 Lấy Dữ Liệu Ứng Viên", "📊 Đánh giá CV", "📈 Dashboard"])
+tab1, tab3 = st.tabs(["🔍 Lấy Dữ Liệu Ứng Viên và 📊 Đánh giá CV", "📈 Dashboard"])
     
 with tab1:
-    st.header("🔍 Lấy Dữ Liệu Ứng Viên")
+    st.header("🔍 Lấy Dữ Liệu Ứng Viên và  📊Lọc CV")
     
     candidate_url = st.text_input("🔗 Nhập URL danh sách ứng viên:")
-    access_token = st.secrets["BASE_API_KEY"]
+    access_token = os.getenv('BASE_API_KEY')
     if st.button("🔎 Lấy Thông Tin Ứng Viên"):
         if candidate_url and access_token:
             if is_valid_url(candidate_url):
-                with st.spinner("⏳ Đang lấy thông tin ứng viên..."):
-                    data = fetch_data(candidate_url, access_token)
-                    if data:
-                        df = process_data(data)
-                        if df is not None:
-                            st.success("✅ Đã lấy thông tin ứng viên thành công!")
-                            st.dataframe(df)
-                            
-                            csv = df.to_csv(index=False).encode('utf-8-sig')
-                            st.download_button(
-                                label="📥 Tải xuống CSV",
-                                data=csv,
-                                file_name="thong_tin_ung_vien.csv",
-                                mime="text/csv",
-                            )
-            else:
-                st.error("❌ URL không hợp lệ. Vui lòng nhập URL theo định dạng: https://hiring.base.vn/opening/candidates/[opening_id]?stage=[stage_id]")
-        else:
-            st.warning("⚠️ Vui lòng nhập cả URL danh sách ứng viên và mã truy cập.")
-
-with tab2:
-    st.header("📊 Đánh giá và Lọc CV")
-    
-    st.subheader("📁 Tải lên file CSV chứa link CV")
-    uploaded_file = st.file_uploader("Chọn file CSV", type=['csv'])
-
-    if st.button("🔍 Đánh giá CV"):
-        if not uploaded_file:
-            st.error("❌ Vui lòng tải lên file CSV chứa link CV.")
-        else:
-            df = pd.read_csv(uploaded_file)
-            jd_df = load_job_descriptions()
-            results = []
-            progress_bar = st.progress(0)
+                data = process_data(fetch_data(candidate_url, access_token))
+                st.success("✅ Đã lấy thông tin ứng viên thành công!")
+                st.header("📊 Đánh giá và Lọc CV")
+                jd2 = fetch_jd(candidate_url, access_token)
+                results = []
+                progress_bar = st.progress(0)
+                    
+                for i, (_, row) in enumerate(data.iterrows()):
+                    name = row['name']
+                    cv_url = row['cvs']
+                    cv_text = get_pdf_text_from_url(cv_url)
+                    name = row['name']
+                    cv_url = row.get('cvs')
+                    expect_salary = row.get('expect_salary', 0)
+                    
+                    jd_row = select_jd(expect_salary, jd_df)
+                    jd1 = jd_row['Job_Description']
+                    position = jd_row['Position']
+                    
+                    cv_text = get_cv_text_from_url(cv_url)
             
-            for i, row in df.iterrows():
-                name = row['name']
-                cv_url = row.get('cvs')
-                expect_salary = row.get('expect_salary', 0)
-                
-                jd_row = select_jd(expect_salary, jd_df)
-                jd1 = jd_row['Job_Description']
-                position = jd_row['Position']
-                
-                cv_text = get_cv_text_from_url(cv_url)
-        
-                if cv_text:
-                    prompt1 = f"""
-                    Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi chính xác theo schema JSON được định nghĩa.
-                    Mô tả công việc:
-                    {jd1}
-
-                    Điểm trừ ( mỗi tiêu chí +5 điểm) nếu hồ sơ có các điểm sau : 
-                    1.	Thiếu kinh nghiệm: Không có đủ kinh nghiệm làm việc liên quan đến vị trí ứng tuyển cho các vị trí nhân viên trở lên. 
-                    2.	Lỗi chính tả và ngữ pháp: Hồ sơ có nhiều lỗi chính tả hoặc ngữ pháp, thể hiện sự thiếu cẩn thận.
-                    3.	Thời gian nghỉ việc dài: Có khoảng thời gian dài không làm việc mà không có lý do rõ ràng.
-                    4.	Thay đổi công việc thường xuyên: Có nhiều lần thay đổi công việc trong thời gian ngắn, có thể gây lo ngại về tính ổn định.
-                    5.	Thiếu thông tin quan trọng: Hồ sơ không cung cấp đủ thông tin về quá trình học tập, kinh nghiệm làm việc hoặc kỹ năng.
-                    6.	Thiếu thông tin liên hệ: Không cung cấp thông tin liên lạc đầy đủ hoặc chính xác.
-                    7.	Không rõ ràng về mục tiêu nghề nghiệp: Mục tiêu nghề nghiệp không rõ ràng hoặc không phù hợp với vị trí ứng tuyển.
-                    8.	Thái độ không chuyên nghiệp: Sử dụng ngôn ngữ không phù hợp hoặc có những bình luận tiêu cực về công việc trước đây.
-                    
-                    Điểm cộng  ( Mỗi tiêu chí +5 điểm ) nếu hồ sơ thể hiện : 
-                    1.	Kinh nghiệm làm việc phong phú: Có nhiều năm kinh nghiệm trong lĩnh vực liên quan hoặc trong các vị trí tương tự.
-                    2.	Kỹ năng chuyên môn mạnh: Sở hữu các kỹ năng chuyên môn cần thiết cho công việc, như kỹ năng phân tích, lập trình, hay quản lý dự án.
-                    3.	Chứng chỉ và bằng cấp phù hợp: Có các chứng chỉ và bằng cấp liên quan đến vị trí ứng tuyển, thể hiện sự cam kết trong nghề nghiệp.
-                    4.	Kỹ năng giao tiếp tốt:  Khả năng giao tiếp rõ ràng và hiệu quả, có thể làm việc với nhiều đối tượng khác nhau.
-                    5.	Thành tích nổi bật: Có thành tích đáng chú ý trong công việc trước đây, như tăng hiệu quả, cải thiện quy trình làm việc, hoặc dự án thành công.
-                    6.	Thái độ tích cực và chuyên nghiệp: Thể hiện sự nhiệt tình, trách nhiệm và thái độ tích cực trong công việc.
-                    
-                    CV:
-                    {cv_text}
-        
-                    Vui lòng trả về kết quả đánh giá theo đúng schema JSON đã định nghĩa.
-                    Chú ý: Các tiêu chí mà bạn không chắc hoặc không ghi rõ trong CV thì bạn sẽ +0 điểm.
-                    """
-                    prompt1 = ' '.join(prompt1.split())
-                    # prompt 2
-                    prompt2 = f"""
-                        Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi **chính xác** theo định dạng dưới đây mà không thêm bất kỳ thông tin nào khác.
-                        Các tiêu chí đánh giá bao gồm:
+                    if cv_text:
+                        prompt1 = f"""
+                        Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi chính xác theo schema JSON được định nghĩa.
+                        Mô tả công việc:
+                        {jd1}
+    
+                        Điểm trừ ( mỗi tiêu chí +5 điểm) nếu hồ sơ có các điểm sau : 
+                        1.	Thiếu kinh nghiệm: Không có đủ kinh nghiệm làm việc liên quan đến vị trí ứng tuyển cho các vị trí nhân viên trở lên. 
+                        2.	Lỗi chính tả và ngữ pháp: Hồ sơ có nhiều lỗi chính tả hoặc ngữ pháp, thể hiện sự thiếu cẩn thận.
+                        3.	Thời gian nghỉ việc dài: Có khoảng thời gian dài không làm việc mà không có lý do rõ ràng.
+                        4.	Thay đổi công việc thường xuyên: Có nhiều lần thay đổi công việc trong thời gian ngắn, có thể gây lo ngại về tính ổn định.
+                        5.	Thiếu thông tin quan trọng: Hồ sơ không cung cấp đủ thông tin về quá trình học tập, kinh nghiệm làm việc hoặc kỹ năng.
+                        6.	Thiếu thông tin liên hệ: Không cung cấp thông tin liên lạc đầy đủ hoặc chính xác.
+                        7.	Không rõ ràng về mục tiêu nghề nghiệp: Mục tiêu nghề nghiệp không rõ ràng hoặc không phù hợp với vị trí ứng tuyển.
+                        8.	Thái độ không chuyên nghiệp: Sử dụng ngôn ngữ không phù hợp hoặc có những bình luận tiêu cực về công việc trước đây.
                         
-                        1. **Mức độ phù hợp với vai trò** (trên thang điểm 0-10): Đánh giá mức độ phù hợp của kinh nghiệm và trình độ của ứng viên so với trách nhiệm công việc.
-                        2. **Kỹ năng kỹ thuật** (trên thang điểm 0-10): Đánh giá mức độ thành thạo của ứng viên đối với các kỹ năng kỹ thuật được yêu cầu trong mô tả công việc.
-                        3. **Kinh nghiệm** (trên thang điểm 0-10): Đánh giá kinh nghiệm của ứng viên về số năm và tính phù hợp với vai trò.
-                        4. **Trình độ học vấn** (trên thang điểm 0-10): Đánh giá trình độ học vấn của ứng viên so với yêu cầu công việc.
-                        5. **Kỹ năng mềm** (trên thang điểm 0-10): Đánh giá các kỹ năng mềm của ứng viên như giao tiếp, làm việc nhóm, và lãnh đạo.
+                        Điểm cộng  ( Mỗi tiêu chí +5 điểm ) nếu hồ sơ thể hiện : 
+                        1.	Kinh nghiệm làm việc phong phú: Có nhiều năm kinh nghiệm trong lĩnh vực liên quan hoặc trong các vị trí tương tự.
+                        2.	Kỹ năng chuyên môn mạnh: Sở hữu các kỹ năng chuyên môn cần thiết cho công việc, như kỹ năng phân tích, lập trình, hay quản lý dự án.
+                        3.	Chứng chỉ và bằng cấp phù hợp: Có các chứng chỉ và bằng cấp liên quan đến vị trí ứng tuyển, thể hiện sự cam kết trong nghề nghiệp.
+                        4.	Kỹ năng giao tiếp tốt:  Khả năng giao tiếp rõ ràng và hiệu quả, có thể làm việc với nhiều đối tượng khác nhau.
+                        5.	Thành tích nổi bật: Có thành tích đáng chú ý trong công việc trước đây, như tăng hiệu quả, cải thiện quy trình làm việc, hoặc dự án thành công.
+                        6.	Thái độ tích cực và chuyên nghiệp: Thể hiện sự nhiệt tình, trách nhiệm và thái độ tích cực trong công việc.
                         
-                        Sau khi đánh giá, cung cấp phản hồi **chính xác** theo định dạng dưới đây, không thêm bất kỳ nội dung nào khác:
-                        
-                        **Định dạng phản hồi:**
-                        - Mức độ phù hợp: [điểm trên 10]
-                        - Kỹ năng kỹ thuật: [điểm trên 10]
-                        - Kinh nghiệm: [điểm trên 10]
-                        - Trình độ học vấn: [điểm trên 10]
-                        - Kỹ năng mềm: [điểm trên 10]
-                        - Điểm tổng quát: [điểm tổng quát trên 10]
-                        - Tóm tắt: [giải thích ngắn gọn về điểm mạnh và điểm yếu của ứng viên]
-                        
-                        **Mô tả công việc:**
-                        {jd2}
-                        
-                        **CV:**
+                        CV:
                         {cv_text}
-                        
-                        Vui lòng chỉ trả về các thông tin được yêu cầu trong đúng định dạng trên, không thêm bất kỳ thông tin hoặc nhận xét nào khác.
+            
+                        Vui lòng trả về kết quả đánh giá theo đúng schema JSON đã định nghĩa.
+                        Chú ý: Các tiêu chí mà bạn không chắc hoặc không ghi rõ trong CV thì bạn sẽ +0 điểm.
                         """
-                    prompt2 = ' '.join(prompt2.split())
-                    try:
-                        response1 = get_gemini_response1(prompt1, cv_text)
-                        time.sleep(2)
-                        response2 = get_gemini_response2(prompt2, cv_text)
-                        
-                        main_criteria_score = response1["truc_nang_luc"] + response1["truc_van_hoa"] + response1["truc_tuong_lai"] + response1["tieu_chi_khac"]
-                        total_score = main_criteria_score + response1["diem_cong"] - response1["diem_tru"]
-                        
-                        # Determine pass/fail based on salary and main criteria score
-                        if expect_salary < 500:
-                            pass_fail = "Pass" if main_criteria_score >= 70 else "Fail"
-                        elif 500 <= expect_salary < 1000:
-                            pass_fail = "Pass" if main_criteria_score >= 75 else "Fail"
-                        elif 1000 <= expect_salary < 1500:
-                            pass_fail = "Pass" if main_criteria_score >= 80 else "Fail"
-                        else:  # expect_salary >= 1500
-                            pass_fail = "Pass" if main_criteria_score >= 85 else "Fail"
-        
-                        uv = {
-                            'Tên ứng viên': name,
-                            'Vị trí': position,
-                            'Trục Năng lực soft skill': response1["truc_nang_luc"],
-                            'Trục Phù hợp Văn hóa soft skill': response1["truc_van_hoa"],
-                            'Trục Tương lai soft skill': response1["truc_tuong_lai"],
-                            'Tiêu chí khác soft skill': response1["tieu_chi_khac"],
-                            'Điểm cộng soft skill': response1["diem_cong"],
-                            'Điểm trừ soft skill': response1["diem_tru"],
-                            'Điểm tổng quát soft skill': total_score,
-                            'Đánh giá soft skill': pass_fail,
-                            'Tóm tắt soft skill': response1["tom_tat"],
-                            'Mức độ phù hợp hard skill': int((str(response2).split('\n')[0]).split(':')[1].strip()),
-                            'Kỹ năng kỹ thuật hard skill': int((str(response2).split('\n')[1]).split(':')[1].strip()),
-                            'Kinh nghiệm hard skill': int((str(response2).split('\n')[2]).split(':')[1].strip()),
-                            'Trình độ học vấn hard skill': int((str(response2).split('\n')[3]).split(':')[1].strip()),
-                            'Kỹ năng mềm hard skill': int((str(response2).split('\n')[4]).split(':')[1].strip()),
-                            'Điểm tổng quát hard skill': round(float((str(response2).split('\n')[5]).split(':')[1].strip()), 2),
-                            'Tóm tắt hard skill': (str(response2).split('\n')[6]).split(':')[1].strip()
-                        }
-        
-                        results.append(uv)
-        
-                    except Exception as e:
-                        st.error(f"❌ Lỗi khi xử lý CV từ {cv_url}: {str(e)}")
-        
-                progress_bar.progress((i + 1) / len(df))
-
+                        prompt1 = ' '.join(prompt1.split())
+                        # prompt 2
+                        prompt2 = f"""
+                            Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi **chính xác** theo định dạng dưới đây mà không thêm bất kỳ thông tin nào khác.
+                            Các tiêu chí đánh giá bao gồm:
+                            
+                            1. **Mức độ phù hợp với vai trò** (trên thang điểm 0-10): Đánh giá mức độ phù hợp của kinh nghiệm và trình độ của ứng viên so với trách nhiệm công việc.
+                            2. **Kỹ năng kỹ thuật** (trên thang điểm 0-10): Đánh giá mức độ thành thạo của ứng viên đối với các kỹ năng kỹ thuật được yêu cầu trong mô tả công việc.
+                            3. **Kinh nghiệm** (trên thang điểm 0-10): Đánh giá kinh nghiệm của ứng viên về số năm và tính phù hợp với vai trò.
+                            4. **Trình độ học vấn** (trên thang điểm 0-10): Đánh giá trình độ học vấn của ứng viên so với yêu cầu công việc.
+                            5. **Kỹ năng mềm** (trên thang điểm 0-10): Đánh giá các kỹ năng mềm của ứng viên như giao tiếp, làm việc nhóm, và lãnh đạo.
+                            
+                            Sau khi đánh giá, cung cấp phản hồi **chính xác** theo định dạng dưới đây, không thêm bất kỳ nội dung nào khác:
+                            
+                            **Định dạng phản hồi:**
+                            - Mức độ phù hợp: [điểm trên 10]
+                            - Kỹ năng kỹ thuật: [điểm trên 10]
+                            - Kinh nghiệm: [điểm trên 10]
+                            - Trình độ học vấn: [điểm trên 10]
+                            - Kỹ năng mềm: [điểm trên 10]
+                            - Điểm tổng quát: [điểm tổng quát trên 10]
+                            - Tóm tắt: [giải thích ngắn gọn về điểm mạnh và điểm yếu của ứng viên]
+                            
+                            **Mô tả công việc:**
+                            {jd2}
+                            
+                            **CV:**
+                            {cv_text}
+                            
+                            Vui lòng chỉ trả về các thông tin được yêu cầu trong đúng định dạng trên, không thêm bất kỳ thông tin hoặc nhận xét nào khác.
+                            """
+                        prompt2 = ' '.join(prompt2.split())
+                        try:
+                            response1 = get_gemini_response1(prompt1, cv_text)
+                            time.sleep(2)
+                            response2 = get_gemini_response2(prompt2, cv_text)
+                            
+                            main_criteria_score = response1["truc_nang_luc"] + response1["truc_van_hoa"] + response1["truc_tuong_lai"] + response1["tieu_chi_khac"]+ response1["diem_cong"] - response1["diem_tru"]
+                            
+                            # Determine pass/fail based on salary and main criteria score
+                            if expect_salary < 500:
+                                pass_fail = "Pass" if main_criteria_score >= 70 else "Fail"
+                            elif 500 <= expect_salary < 1000:
+                                pass_fail = "Pass" if main_criteria_score >= 75 else "Fail"
+                            elif 1000 <= expect_salary < 1500:
+                                pass_fail = "Pass" if main_criteria_score >= 80 else "Fail"
+                            else:  # expect_salary >= 1500
+                                pass_fail = "Pass" if main_criteria_score >= 85 else "Fail"
+            
+                            uv = {
+                                'Tên ứng viên': name,
+                                'Vị trí': position,
+                                'Trục Năng lực soft skill': response1["truc_nang_luc"],
+                                'Trục Phù hợp Văn hóa soft skill': response1["truc_van_hoa"],
+                                'Trục Tương lai soft skill': response1["truc_tuong_lai"],
+                                'Tiêu chí khác soft skill': response1["tieu_chi_khac"],
+                                'Điểm cộng soft skill': response1["diem_cong"],
+                                'Điểm trừ soft skill': response1["diem_tru"],
+                                'Điểm tổng quát soft skill': main_criteria_score,
+                                'Đánh giá soft skill': pass_fail,
+                                'Tóm tắt soft skill': response1["tom_tat"],
+                                'Mức độ phù hợp hard skill': response2["muc_do_phu_hop"],
+                                'Kỹ năng kỹ thuật hard skill': response2["ky_nang_ky_thuat"],
+                                'Kinh nghiệm hard skill': response2["kinh_nghiem"],
+                                'Trình độ học vấn hard skill': response2["trinh_do_hoc_van"],
+                                'Kỹ năng mềm hard skill': response2["ky_nang_mem"],
+                                'Điểm tổng quát hard skill': round( response2["diem_tong_quat"], 2),
+                                'Tóm tắt hard skill': response2["tom_tat"]
+                            }
+            
+                            results.append(uv)
+            
+                        except Exception as e:
+                            st.error(f"❌ Lỗi khi xử lý CV từ {cv_url}: {str(e)}")
+            
+                    progress_bar.progress(min(1.0, (i + 1) / len(data)))
+                    
             if results:
                 st.subheader("📊 Kết quả đánh giá CV")
                 df_results = pd.DataFrame(results)
