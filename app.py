@@ -201,48 +201,44 @@ else:
     st.error("Không tìm thấy GOOGLE_API_KEY trong biến môi trường. Vui lòng kiểm tra cấu hình trước khi sử dụng ứng dụng.")
     st.stop()
 
+
 st.sidebar.header("📚 Hướng dẫn sử dụng")
 
 st.sidebar.markdown("""
 ### 👋 Chào mừng bạn đến với Công cụ Đánh giá CV và Lấy Thông Tin Ứng Viên!
-Ứng dụng này gồm ba chức năng chính:
-1. **🔍 Lấy Thông Tin Ứng Viên**
-2. **📊 Đánh giá CV**
-3. **📈 Dashboard Phân tích**
+Ứng dụng này gồm hai chức năng chính:
+1. **🔍 Lấy Thông Tin Ứng Viên và Đánh giá CV**
+2. **📈 Dashboard Phân tích**
 """)
 
-with st.sidebar.expander("🔍 Hướng dẫn sử dụng chức năng Lấy Thông Tin Ứng Viên", expanded=False):
+with st.sidebar.expander("🔍 Hướng dẫn sử dụng chức năng Lấy Thông Tin và Đánh giá CV", expanded=False):
     st.markdown("""
-    1. Chuyển đến tab "Lấy Thông Tin Ứng Viên".
+    1. Chuyển đến tab "Lấy Dữ Liệu Ứng Viên và Đánh giá CV".
     2. Nhập URL danh sách ứng viên từ hệ thống tuyển dụng Base. URL phải có định dạng:
        `https://hiring.base.vn/opening/candidates/[opening_id]?stage=[stage_id]`
     3. Nhấp vào nút "Lấy Thông Tin Ứng Viên" để bắt đầu quá trình.
-    4. Thông tin ứng viên sẽ được hiển thị trong một bảng và bạn có thể tải xuống dưới dạng file CSV.
-    """)
-
-with st.sidebar.expander("📊 Hướng dẫn sử dụng chức năng Đánh giá CV", expanded=False):
-    st.markdown("""
-    1. Chuyển đến tab "Đánh giá CV".
-    2. Tải lên file CSV chứa thông tin CV. File CSV cần có các cột sau:
-       - "name" (tên ứng viên)
-       - "cvs" (link đến file CV)
-       - "expect_salary" (mức lương mong muốn)
-    3. Nhấn "Đánh Giá CV" để bắt đầu. Hệ thống sẽ tự động chọn JD phù hợp dựa trên mức lương mong muốn và trả về kết quả đánh giá chi tiết, bao gồm điểm số và tóm tắt.
+    4. Hệ thống sẽ tự động lấy thông tin ứng viên và đánh giá CV.(Khuyến khích sử dụng file CV pdf hoặc docx để lọc và chấm điểm dễ dàng hơn)
+    5. Kết quả đánh giá sẽ được hiển thị trong một bảng và bạn có thể tải xuống dưới dạng file CSV.
     """)
 
 with st.sidebar.expander("📈 Hướng dẫn sử dụng chức năng Dashboard", expanded=False):
     st.markdown("""
     1. Chuyển đến tab "Dashboard".
-    2. Tải lên file CSV chứa kết quả đánh giá CV (có thể sử dụng file kết quả từ chức năng Đánh giá CV).
-    3. Xem các biểu đồ và thống kê về ứng viên, bao gồm phân phối điểm, ma trận tương quan, và so sánh kỹ năng.
+    2. Tải lên file CSV chứa kết quả đánh giá CV (file kết quả từ chức năng Lấy Thông Tin và Đánh giá CV).
+    3. Xem các biểu đồ và thống kê về ứng viên, bao gồm:
+       - Thông tin tổng quan
+       - Phân tích đánh giá theo tiêu chí
+       - Biểu đồ kỹ năng ứng viên
+       - Lọc và sắp xếp ứng viên
+       - Top ứng viên theo vị trí
     4. Sử dụng các công cụ tương tác để phân tích sâu hơn về từng ứng viên.
     """)
 
 st.sidebar.warning("""
 **⚠️ Lưu ý:**
-- Đảm bảo bạn có quyền truy cập vào các file CV được liên kết trong file CSV và vào hệ thống tuyển dụng Base.
+- Đảm bảo bạn có quyền truy cập vào hệ thống tuyển dụng Base.
 - Công cụ này dùng để hỗ trợ quyết định, không thay thế đánh giá của chuyên gia HR.
-- Nếu gặp lỗi, kiểm tra lại cấu hình biến môi trường GOOGLE_API_KEY và BASE_API_KEY, định dạng file CSV, URL danh sách ứng viên.
+- Nếu gặp lỗi, kiểm tra lại cấu hình biến môi trường GOOGLE_API_KEY và BASE_API_KEY, URL danh sách ứng viên.
 - Bảo mật thông tin ứng viên và tuân thủ các quy định về bảo vệ dữ liệu cá nhân.
 """)
 
