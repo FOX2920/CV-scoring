@@ -33,7 +33,7 @@ cleaned_schema = {
     "required": ["truc_nang_luc", "truc_van_hoa", "truc_tuong_lai", "tieu_chi_khac", "tom_tat"]
 }
 
-cleaned_schema_2 = {
+new_schema = {
     "type": "object",
     "properties": {
         "muc_do_phu_hop": {
