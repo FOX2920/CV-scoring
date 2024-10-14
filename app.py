@@ -183,26 +183,6 @@ def select_jd(salary, jd_df):
     else:  # salary >= 1500
         return jd_df.iloc[3]
 
-def process_data(data):
-    if 'candidates' not in data:
-        st.error("Không tìm thấy ứng viên trong phản hồi.")
-        return None
-    df = pd.DataFrame(data['candidates'])
-    
-    df['cvs'] = df['cvs'].apply(lambda x: x[0] if len(x) > 0 else None)
-    df['cvs'] = df['cvs'].astype(str) 
-    df['title'] = df['title'].apply(lambda x: re.sub(r'<.*?>', '', x) if isinstance(x, str) else x)
-    df['name'] = df['name'].apply(lambda x: unescape(x))
-    df['expect_salary'] = df['form'].apply(extract_salary)
-    df = df[df['cvs'].notnull()]
-    df = df[df['cvs']!="None"]
-    df = df[df['expect_salary'].notnull()]
-    df = df[df['expect_salary']!=""]
-    df = df.dropna(axis=1, how='any')
-    selected_df = df[['id', 'name', 'email', 'status', 'cvs', 'expect_salary']]
-    
-    return selected_df
-
 
 # Main application
 
@@ -326,33 +306,12 @@ with tab1:
                         prompt1 = ' '.join(prompt1.split())
                         # prompt 2
                         prompt2 = f"""
-                            Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi **chính xác** theo định dạng dưới đây mà không thêm bất kỳ thông tin nào khác.
-                            Các tiêu chí đánh giá bao gồm:
-                            
-                            1. **Mức độ phù hợp với vai trò** (trên thang điểm 0-10): Đánh giá mức độ phù hợp của kinh nghiệm và trình độ của ứng viên so với trách nhiệm công việc.
-                            2. **Kỹ năng kỹ thuật** (trên thang điểm 0-10): Đánh giá mức độ thành thạo của ứng viên đối với các kỹ năng kỹ thuật được yêu cầu trong mô tả công việc.
-                            3. **Kinh nghiệm** (trên thang điểm 0-10): Đánh giá kinh nghiệm của ứng viên về số năm và tính phù hợp với vai trò.
-                            4. **Trình độ học vấn** (trên thang điểm 0-10): Đánh giá trình độ học vấn của ứng viên so với yêu cầu công việc.
-                            5. **Kỹ năng mềm** (trên thang điểm 0-10): Đánh giá các kỹ năng mềm của ứng viên như giao tiếp, làm việc nhóm, và lãnh đạo.
-                            
-                            Sau khi đánh giá, cung cấp phản hồi **chính xác** theo định dạng dưới đây, không thêm bất kỳ nội dung nào khác:
-                            
-                            **Định dạng phản hồi:**
-                            - Mức độ phù hợp: [điểm trên 10]
-                            - Kỹ năng kỹ thuật: [điểm trên 10]
-                            - Kinh nghiệm: [điểm trên 10]
-                            - Trình độ học vấn: [điểm trên 10]
-                            - Kỹ năng mềm: [điểm trên 10]
-                            - Điểm tổng quát: [điểm tổng quát trên 10]
-                            - Tóm tắt: [giải thích ngắn gọn về điểm mạnh và điểm yếu của ứng viên]
-                            
-                            **Mô tả công việc:**
+                            Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi chính xác theo schema JSON được định nghĩa.
+                            Mô tả công việc:
                             {jd2}
-                            
-                            **CV:**
+                            CV:
                             {cv_text}
-                            
-                            Vui lòng chỉ trả về các thông tin được yêu cầu trong đúng định dạng trên, không thêm bất kỳ thông tin hoặc nhận xét nào khác.
+                            Vui lòng trả về kết quả đánh giá theo đúng schema JSON đã định nghĩa.
                             """
                         prompt2 = ' '.join(prompt2.split())
                         try:
