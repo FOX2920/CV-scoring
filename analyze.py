@@ -46,7 +46,7 @@ def dashboard():
         df.rename(columns={
                 'Điểm tổng quát soft skill' : 'Điểm tổng quát theo tiêu chí', 
                 'Điểm tổng quát hard skill':'Điểm tổng quát theo CV', 
-                'Trục Năng lực  soft skill':'Trục Năng lực', 
+                'Trục Năng lực soft skill':'Trục Năng lực', 
                 'Trục Phù hợp Văn hóa soft skill':'Trục Phù hợp Văn hóa', 
                 'Trục Tương lai soft skill':'Trục Tương lai', 
                 'Tiêu chí khác soft skill':'Tiêu chí khác', 
