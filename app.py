@@ -120,16 +120,18 @@ def fetch_data(job_url, access_token):
     response = requests.post(api_url, headers=headers, data=payload)
     return response.json()
 
-# Extract numeric value from 'expect_salary' (e.g., '2,000 (USD/tháng)' => 2000)
-def extract_numeric_salary(salary):
-    match = re.search(r'(\d{1,3}(?:,\d{3})*)', salary)
-    return int(match.group(1).replace(',', '')) if match else 0
-# Extract 'Mức lương mong muốn' (expected salary) from the 'fields' column
 def extract_salary(fields):
     for field in fields:
         if field.get('id') == 'muc_luong_mong_muon':  
-            return extract_numeric_salary(field.get('value'))
-    return 0
+            salary = extract_numeric_salary(field.get('value', '0'))
+            return salary if salary is not None else 0
+    return 0  # Return 0 if 'muc_luong_mong_muon' field is not found
+
+def extract_numeric_salary(salary):
+    if not salary:
+        return 0
+    match = re.search(r'(\d{1,3}(?:,\d{3})*)', str(salary))
+    return int(match.group(1).replace(',', '')) if match else 0
 
 def process_data(data):
     if 'candidates' not in data:
@@ -142,13 +144,13 @@ def process_data(data):
     df['title'] = df['title'].apply(lambda x: re.sub(r'<.*?>', '', x) if isinstance(x, str) else x)
     df['name'] = df['name'].apply(lambda x: unescape(x))
     df['expect_salary'] = df['form'].apply(extract_salary)
-    # Filter rows where 'cvs' is not None
-    df = df[df['cvs'].notnull()]
-    df = df[df['cvs']!="None"]
-    # Save to CSV
-    # df = df[df['expect_salary'].notnull()]
-    # df = df[df['expect_salary']!=""]
-    df = df.dropna(axis=1, how='any')
+    
+    # Filter rows where 'cvs' is not None or "None"
+    df = df[df['cvs'].notnull() & (df['cvs'] != "None")]
+    
+    # Remove columns with all NaN values
+    df = df.dropna(axis=1, how='all')
+    
     selected_df = df[['id', 'name', 'email', 'status', 'cvs', 'expect_salary']]
     
     return selected_df
