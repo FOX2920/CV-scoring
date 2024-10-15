@@ -58,10 +58,6 @@ new_schema = {
             "type": "integer",
             "description": "Đánh giá các kỹ năng mềm của ứng viên, bao gồm giao tiếp, làm việc nhóm và kỹ năng lãnh đạo trong khoảng từ 0 đến 10.",
         },
-        "diem_tong_quat": {
-            "type": "number",
-            "description": "Trung bình của các điểm đánh giá ở 5 tiêu chí trên.",
-        },
         "tom_tat": {
             "type": "string",
             "description": "Tóm tắt điểm mạnh và điểm yếu chính của ứng viên dựa trên CV trong 2 hoặc 3 câu."
