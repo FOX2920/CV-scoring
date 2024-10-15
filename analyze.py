@@ -128,7 +128,7 @@ def dashboard():
         with col1:
             min_score_soft = st.number_input("Điểm tổng quát theo tiêu chí tối thiểu", min_value=0, max_value=100, value=0)
         with col2:
-            min_score_hard = st.number_input("Điểm tổng quát theo CV tối thiểu", min_value=0, max_value=100, value=0)
+            min_score_hard = st.number_input("Điểm tổng quát theo CV tối thiểu", min_value=0, max_value=10, value=0)
         with col3:
             selected_position = st.multiselect("Chọn Vị trí tương ứng", df['Vị trí tương ứng'].unique())
         with col4:
@@ -143,10 +143,14 @@ def dashboard():
         st.header("🥇 Top ứng viên theo Vị trí tương ứng")
         positions = ['Tư vấn', 'Quản lý', 'Nhân viên', 'Thực tập sinh']
         for position in positions:
-            st.subheader(f"Top 5 ứng viên cho Vị trí tương ứng: {position}")
-            top_candidates_position = df[df['Vị trí tương ứng'] == position].sort_values('Điểm tổng quát theo tiêu chí', ascending=False).head(5)
-            st.table(top_candidates_position[['Tên ứng viên', 'Điểm tổng quát theo tiêu chí', 'Điểm tổng quát theo CV', 'Trục Năng lực', 'Trục Phù hợp Văn hóa', 'Trục Tương lai', 'Tiêu chí khác', 'Điểm cộng', 'Điểm trừ']])
-        
+            if position != 'Thực tập sinh':
+                st.subheader(f"Top 5 ứng viên cho Vị trí tương ứng: {position} theo tiêu chí")
+                top_candidates_position = df[df['Vị trí tương ứng'] == position].sort_values('Điểm tổng quát theo tiêu chí', ascending=False).head(5)
+                st.table(top_candidates_position[['Tên ứng viên', 'Điểm tổng quát theo tiêu chí', 'Điểm tổng quát theo CV', 'Trục Năng lực', 'Trục Phù hợp Văn hóa', 'Trục Tương lai', 'Tiêu chí khác', 'Điểm cộng', 'Điểm trừ']])
+            else:
+                st.subheader(f"Top 5 ứng viên cho Vị trí tương ứng: {position} theo CV")
+                top_candidates_position = df[df['Vị trí tương ứng'] == position].sort_values('Điểm tổng quát theo CV', ascending=False).head(5)
+                st.table(top_candidates_position[['Tên ứng viên', 'Điểm tổng quát theo CV', 'Điểm tổng quát theo tiêu chí', 'Mức độ phù hợp', 'Kỹ năng kỹ thuật', 'Kinh nghiệm', 'Trình độ học vấn', 'Kỹ năng mềm']])
         st.header("📋 Dữ liệu chi tiết")
         st.dataframe(df)
 
