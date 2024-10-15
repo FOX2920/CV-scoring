@@ -180,7 +180,7 @@ def fetch_jd(job_url, access_token):
     return plain_text
 
 def select_jd(salary, jd_df):
-    elif 0 < salary < 500:
+    if 0 < salary < 500:
         return jd_df.iloc[0]
     elif 500 <= salary < 1000:
         return jd_df.iloc[1]
