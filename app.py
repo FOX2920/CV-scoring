@@ -180,16 +180,16 @@ def fetch_jd(job_url, access_token):
     return plain_text
 
 def select_jd(salary, jd_df):
-    if salary <= 0:
-        return pd.Series({'Position': "Chưa sắp xếp được vị trí", 'Job_Description': ""})  
     elif 0 < salary < 500:
         return jd_df.iloc[0]
     elif 500 <= salary < 1000:
         return jd_df.iloc[1]
     elif 1000 <= salary < 1500:
         return jd_df.iloc[2]
-    else:  # salary >= 1500
+    elif salary >= 1500:  # 
         return jd_df.iloc[3]
+    else:
+        return pd.Series({'Position': "Chưa sắp xếp được vị trí", 'Job_Description': "Không có tiêu chí để chấm nên chấm 0 điểm hết"})  
 
 
 # Main application
