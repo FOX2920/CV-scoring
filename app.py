@@ -322,7 +322,7 @@ with tab1:
                             if expect_salary != 0:
                                 response1 = get_gemini_response1(prompt1, cv_text)
                                 main_criteria_score = response1["truc_nang_luc"] + response1["truc_van_hoa"] + response1["truc_tuong_lai"] + response1["tieu_chi_khac"] + response1["diem_cong"] - response1["diem_tru"]
-                                
+                                main_CV_score = round((response2["muc_do_phu_hop"] + response2["ky_nang_ky_thuat"] + response2["kinh_nghiem"] + response2["trinh_do_hoc_van"] + response2["ky_nang_mem"])/5 ,2)
                                 # Determine pass/fail based on salary and main criteria score
                                 if 0 < expect_salary < 500:
                                     pass_fail = "Pass" if main_criteria_score >= 70 else "Fail"
@@ -363,7 +363,7 @@ with tab1:
                                 'Kinh nghiệm hard skill': response2["kinh_nghiem"],
                                 'Trình độ học vấn hard skill': response2["trinh_do_hoc_van"],
                                 'Kỹ năng mềm hard skill': response2["ky_nang_mem"],
-                                'Điểm tổng quát hard skill': round(response2["diem_tong_quat"], 1),
+                                'Điểm tổng quát hard skill': main_CV_score,
                                 'Tóm tắt hard skill': response2["tom_tat"]
                             }
                         
