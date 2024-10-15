@@ -317,7 +317,7 @@ with tab1:
                         try:
                             response2 = get_gemini_response2(prompt2, cv_text)
                             time.sleep(2)
-                            if expect_salary > 0:
+                            if expect_salary != 0:
                                 response1 = get_gemini_response1(prompt1, cv_text)
                                 main_criteria_score = response1["truc_nang_luc"] + response1["truc_van_hoa"] + response1["truc_tuong_lai"] + response1["tieu_chi_khac"] + response1["diem_cong"] - response1["diem_tru"]
                                 
@@ -361,7 +361,7 @@ with tab1:
                                 'Kinh nghiệm hard skill': response2["kinh_nghiem"],
                                 'Trình độ học vấn hard skill': response2["trinh_do_hoc_van"],
                                 'Kỹ năng mềm hard skill': response2["ky_nang_mem"],
-                                'Điểm tổng quát hard skill': round(response2["diem_tong_quat"], 2),
+                                'Điểm tổng quát hard skill': round(response2["diem_tong_quat"], 1),
                                 'Tóm tắt hard skill': response2["tom_tat"]
                             }
                         
