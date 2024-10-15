@@ -180,18 +180,16 @@ def fetch_jd(job_url, access_token):
     return plain_text
 
 def select_jd(salary, jd_df):
-    if 0 < salary < 500:
+    if salary <= 0:  # If salary is not specified or invalid
+        return pd.Series({'Position': "Chưa sắp xếp được vị trí", 'Job_Description': "Không có tiêu chí để chấm nên chấm 0 điểm hết"})
+    elif 0 < salary < 500:
         return jd_df.iloc[0]
     elif 500 <= salary < 1000:
         return jd_df.iloc[1]
     elif 1000 <= salary < 1500:
         return jd_df.iloc[2]
-    elif salary >= 1500:  # 
+    elif salary >= 1500:
         return jd_df.iloc[3]
-    else:
-        return pd.Series({'Position': "Chưa sắp xếp được vị trí", 'Job_Description': "Không có tiêu chí để chấm nên chấm 0 điểm hết"})  
-
-
 # Main application
 
 st.set_page_config(page_title="Công Cụ Đánh Giá CV và Lấy Dữ Liệu Công Việc", layout="wide")
@@ -267,20 +265,15 @@ with tab1:
                 results = []
                 progress_bar = st.progress(0)
                     
-                # Điều chỉnh phần xử lý chính
                 for i, (_, row) in enumerate(data.iterrows()):
                     name = row['name']
                     cv_url = row['cvs']
                     expect_salary = row.get('expect_salary', -1)
-                    jd_row = select_jd(expect_salary, jd_df)
-                    position = jd_row['Position']
-                    jd1 = jd_row['Job_Description']
-                    jd2 = fetch_jd(candidate_url, access_token)
-                
+                    
                     cv_text = get_cv_text_from_url(cv_url)
                 
                     if cv_text:
-                        # Luôn đánh giá theo prompt 2
+                        # Always evaluate using prompt 2
                         prompt2 = f"""
                         Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi chính xác theo schema JSON được định nghĩa.
                         Mô tả công việc:
@@ -294,40 +287,44 @@ with tab1:
                             main_CV_score = round((response2["muc_do_phu_hop"] + response2["ky_nang_ky_thuat"] + response2["kinh_nghiem"] + response2["trinh_do_hoc_van"] + response2["ky_nang_mem"])/5, 2)
                 
                             if expect_salary > 0:
-                                # Nếu có mức lương mong muốn, đánh giá thêm theo prompt 1
+                                # If salary is specified, evaluate using prompt 1 and assign position
+                                jd_row = select_jd(expect_salary, jd_df)
+                                position = jd_row['Position']
+                                jd1 = jd_row['Job_Description']
+                                
                                 prompt1 = f"""
-                                        Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi chính xác theo schema JSON được định nghĩa.
-                                        Mô tả công việc:
-                                        {jd1}
+                                Bạn là một chuyên gia nhân sự và tuyển dụng. Hãy đánh giá CV dưới đây dựa trên mô tả công việc và cung cấp phản hồi chính xác theo schema JSON được định nghĩa.
+                                Mô tả công việc:
+                                {jd1}
+                                
+                                Điểm trừ ( mỗi tiêu chí +5 điểm) nếu hồ sơ có các điểm sau : 
+                                1.	Thiếu kinh nghiệm: Không có đủ kinh nghiệm làm việc liên quan đến vị trí ứng tuyển cho các vị trí nhân viên trở lên. 
+                                2.	Lỗi chính tả và ngữ pháp: Hồ sơ có nhiều lỗi chính tả hoặc ngữ pháp, thể hiện sự thiếu cẩn thận.
+                                3.	Thời gian nghỉ việc dài: Có khoảng thời gian dài không làm việc mà không có lý do rõ ràng.
+                                4.	Thay đổi công việc thường xuyên: Có nhiều lần thay đổi công việc trong thời gian ngắn, có thể gây lo ngại về tính ổn định.
+                                5.	Thiếu thông tin quan trọng: Hồ sơ không cung cấp đủ thông tin về quá trình học tập, kinh nghiệm làm việc hoặc kỹ năng.
+                                6.	Thiếu thông tin liên hệ: Không cung cấp thông tin liên lạc đầy đủ hoặc chính xác.
+                                7.	Không rõ ràng về mục tiêu nghề nghiệp: Mục tiêu nghề nghiệp không rõ ràng hoặc không phù hợp với vị trí ứng tuyển.
+                                8.	Thái độ không chuyên nghiệp: Sử dụng ngôn ngữ không phù hợp hoặc có những bình luận tiêu cực về công việc trước đây.
+                                
+                                Điểm cộng  ( Mỗi tiêu chí +5 điểm ) nếu hồ sơ thể hiện : 
+                                1.	Kinh nghiệm làm việc phong phú: Có nhiều năm kinh nghiệm trong lĩnh vực liên quan hoặc trong các vị trí tương tự.
+                                2.	Kỹ năng chuyên môn mạnh: Sở hữu các kỹ năng chuyên môn cần thiết cho công việc, như kỹ năng phân tích, lập trình, hay quản lý dự án.
+                                3.	Chứng chỉ và bằng cấp phù hợp: Có các chứng chỉ và bằng cấp liên quan đến vị trí ứng tuyển, thể hiện sự cam kết trong nghề nghiệp.
+                                4.	Kỹ năng giao tiếp tốt:  Khả năng giao tiếp rõ ràng và hiệu quả, có thể làm việc với nhiều đối tượng khác nhau.
+                                5.	Thành tích nổi bật: Có thành tích đáng chú ý trong công việc trước đây, như tăng hiệu quả, cải thiện quy trình làm việc, hoặc dự án thành công.
+                                6.	Thái độ tích cực và chuyên nghiệp: Thể hiện sự nhiệt tình, trách nhiệm và thái độ tích cực trong công việc.
+                                
+                                CV:
+                                {cv_text}
                     
-                                        Điểm trừ ( mỗi tiêu chí +5 điểm) nếu hồ sơ có các điểm sau : 
-                                        1.	Thiếu kinh nghiệm: Không có đủ kinh nghiệm làm việc liên quan đến vị trí ứng tuyển cho các vị trí nhân viên trở lên. 
-                                        2.	Lỗi chính tả và ngữ pháp: Hồ sơ có nhiều lỗi chính tả hoặc ngữ pháp, thể hiện sự thiếu cẩn thận.
-                                        3.	Thời gian nghỉ việc dài: Có khoảng thời gian dài không làm việc mà không có lý do rõ ràng.
-                                        4.	Thay đổi công việc thường xuyên: Có nhiều lần thay đổi công việc trong thời gian ngắn, có thể gây lo ngại về tính ổn định.
-                                        5.	Thiếu thông tin quan trọng: Hồ sơ không cung cấp đủ thông tin về quá trình học tập, kinh nghiệm làm việc hoặc kỹ năng.
-                                        6.	Thiếu thông tin liên hệ: Không cung cấp thông tin liên lạc đầy đủ hoặc chính xác.
-                                        7.	Không rõ ràng về mục tiêu nghề nghiệp: Mục tiêu nghề nghiệp không rõ ràng hoặc không phù hợp với vị trí ứng tuyển.
-                                        8.	Thái độ không chuyên nghiệp: Sử dụng ngôn ngữ không phù hợp hoặc có những bình luận tiêu cực về công việc trước đây.
-                                        
-                                        Điểm cộng  ( Mỗi tiêu chí +5 điểm ) nếu hồ sơ thể hiện : 
-                                        1.	Kinh nghiệm làm việc phong phú: Có nhiều năm kinh nghiệm trong lĩnh vực liên quan hoặc trong các vị trí tương tự.
-                                        2.	Kỹ năng chuyên môn mạnh: Sở hữu các kỹ năng chuyên môn cần thiết cho công việc, như kỹ năng phân tích, lập trình, hay quản lý dự án.
-                                        3.	Chứng chỉ và bằng cấp phù hợp: Có các chứng chỉ và bằng cấp liên quan đến vị trí ứng tuyển, thể hiện sự cam kết trong nghề nghiệp.
-                                        4.	Kỹ năng giao tiếp tốt:  Khả năng giao tiếp rõ ràng và hiệu quả, có thể làm việc với nhiều đối tượng khác nhau.
-                                        5.	Thành tích nổi bật: Có thành tích đáng chú ý trong công việc trước đây, như tăng hiệu quả, cải thiện quy trình làm việc, hoặc dự án thành công.
-                                        6.	Thái độ tích cực và chuyên nghiệp: Thể hiện sự nhiệt tình, trách nhiệm và thái độ tích cực trong công việc.
-                                        
-                                        CV:
-                                        {cv_text}
-                            
-                                        Vui lòng trả về kết quả đánh giá theo đúng schema JSON đã định nghĩa.
-                                        Chú ý: Các tiêu chí mà bạn không chắc hoặc không ghi rõ trong CV thì bạn sẽ +0 điểm.
-                                        """
+                                Vui lòng trả về kết quả đánh giá theo đúng schema JSON đã định nghĩa.
+                                Chú ý: Các tiêu chí mà bạn không chắc hoặc không ghi rõ trong CV thì bạn sẽ +0 điểm.
+                                """
                                 response1 = get_gemini_response1(prompt1, cv_text)
                                 main_criteria_score = response1["truc_nang_luc"] + response1["truc_van_hoa"] + response1["truc_tuong_lai"] + response1["tieu_chi_khac"] + response1["diem_cong"] - response1["diem_tru"]
                                 
-                                # Xác định Pass/Fail dựa trên mức lương và điểm tiêu chí chính
+                                # Determine Pass/Fail based on salary and main criteria score
                                 if expect_salary < 500:
                                     pass_fail = "Pass" if main_criteria_score >= 70 else "Fail"
                                 elif 500 <= expect_salary < 1000:
@@ -337,7 +334,8 @@ with tab1:
                                 else:  # expect_salary >= 1500
                                     pass_fail = "Pass" if main_criteria_score >= 85 else "Fail"
                             else:
-                                # Nếu không có mức lương mong muốn, chỉ sử dụng kết quả từ prompt 2
+                                # If no salary is specified, use default values and don't assign a position
+                                position = "Chưa sắp xếp được vị trí"
                                 response1 = {
                                     "truc_nang_luc": 0,
                                     "truc_van_hoa": 0,
