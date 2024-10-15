@@ -63,5 +63,5 @@ new_schema = {
             "description": "Tóm tắt điểm mạnh và điểm yếu chính của ứng viên dựa trên CV trong 2 hoặc 3 câu."
         }
     },
-    "required": ["muc_do_phu_hop", "ky_nang_ky_thuat", "kinh_nghiem", "trinh_do_hoc_van", "ky_nang_mem", "diem_tong_quat", "tom_tat"]
+    "required": ["muc_do_phu_hop", "ky_nang_ky_thuat", "kinh_nghiem", "trinh_do_hoc_van", "ky_nang_mem", "tom_tat"]
 }
