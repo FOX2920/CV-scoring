@@ -5,6 +5,7 @@ python-docx
 pandas
 nltk
 scikit-learn
+pillow
 plotly
 pandas
 tiktoken
