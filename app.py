@@ -13,6 +13,9 @@ from docx import Document
 from analyze import dashboard
 from bs4 import BeautifulSoup
 from config import cleaned_schema, new_schema
+from PIL import Image
+
+im = Image.open("aplus.ico")
 
 # Function definitions
 def is_valid_url(url):
@@ -192,7 +195,7 @@ def select_jd(salary, jd_df):
         return jd_df.iloc[3]
 # Main application
 
-st.set_page_config(page_title="Công Cụ Đánh Giá CV và Lấy Dữ Liệu Công Việc", layout="wide")
+st.set_page_config(page_title="Công Cụ Đánh Giá CV và Lấy Dữ Liệu Công Việc", page_icon=im, layout="wide")
 st.title("🚀 Công Cụ Đánh Giá CV và Lấy Dữ Liệu Công Việc")
 
 # Configure Google API
