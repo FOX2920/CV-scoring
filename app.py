@@ -206,7 +206,6 @@ else:
     st.error("Không tìm thấy GOOGLE_API_KEY trong biến môi trường. Vui lòng kiểm tra cấu hình trước khi sử dụng ứng dụng.")
     st.stop()
 
-st.sidebar.image(im, width=100)
 st.sidebar.header("📚 Hướng dẫn sử dụng")
 
 st.sidebar.markdown("""
