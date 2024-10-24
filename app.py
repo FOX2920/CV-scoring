@@ -270,7 +270,7 @@ with tab1:
     if st.button("🔎 Lấy Thông Tin Ứng Viên"):
         if candidate_url and access_token:
             if is_valid_url(candidate_url):
-                data = process_data(fetch_data(candidate_url, access_token))
+               data = process_data(fetch_data(candidate_url, access_token, start_date))
                 st.success("✅ Đã lấy thông tin ứng viên thành công!")
                 st.header("📊 Đánh giá và Lọc CV")
                 jd_df = pd.read_csv('JD_tc.csv')
