@@ -11,6 +11,7 @@ from html import unescape
 import json
 from docx import Document
 from analyze import dashboard
+from datetime import datetime, date
 from bs4 import BeautifulSoup
 from config import cleaned_schema, new_schema
 from PIL import Image
@@ -105,7 +106,7 @@ def extract_ids_from_url(url):
         return match.group(1), match.group(2)
     return None, None
 
-def fetch_data(job_url, access_token):
+def fetch_data(job_url, access_token, start_date):
     opening_id, stage_id = extract_ids_from_url(job_url)
     if not opening_id or not stage_id:
         st.error("URL không hợp lệ. Không thể trích xuất opening_id và stage_id.")
@@ -116,7 +117,7 @@ def fetch_data(job_url, access_token):
         'opening_id': opening_id,
         'num_per_page': '10000',
         'stage_id': stage_id,
-        'start_date': '2023-11-01',
+        'start_date': start_date.strftime('%Y-%m-%d'),
         'end_date': ''
     }
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
@@ -255,6 +256,16 @@ with tab1:
     st.header("🔍 Lấy Dữ Liệu Ứng Viên")
     
     candidate_url = st.text_input("🔗 Nhập URL danh sách ứng viên:")
+
+    # Get first day of current month for default date
+    today = date.today()
+    default_date = date(today.year, today.month, 1)
+    
+    start_date = st.date_input(
+        "📅 Chọn ngày bắt đầu lấy dữ liệu",
+        value=default_date,
+        format="DD/MM/YYYY"
+    )
     access_token = os.getenv('BASE_API_KEY')
     if st.button("🔎 Lấy Thông Tin Ứng Viên"):
         if candidate_url and access_token:
