@@ -15,6 +15,12 @@ from datetime import datetime, date
 from bs4 import BeautifulSoup
 from config import cleaned_schema, new_schema
 from PIL import Image
+import openai
+import time
+import json
+
+# Set up your OpenAI API key
+openai.api_key = st.secrets["OPEN_AI_KEY"]
 
 im = Image.open("aplus.ico")
 
@@ -76,27 +82,65 @@ def get_cv_text_from_url(cv_url):
         print(f"Unsupported file format for URL: {cv_url}")
         return None
 
-def get_gemini_response1(prompt, content):
-    model = genai.GenerativeModel('models/gemini-1.5-flash-latest',
-                                  generation_config={
-                                      "response_mime_type": "application/json",
-                                      "response_schema": cleaned_schema
-                                  })
-    response = model.generate_content(prompt + content)
-    response_json = json.loads(response.text)
+# def get_gemini_response1(prompt, content):
+#     model = genai.GenerativeModel('models/gemini-1.5-flash-latest',
+#                                   generation_config={
+#                                       "response_mime_type": "application/json",
+#                                       "response_schema": cleaned_schema
+#                                   })
+#     response = model.generate_content(prompt + content)
+#     response_json = json.loads(response.text)
+#     time.sleep(3)
+#     return response_json
+
+def get_gpt4_response1(prompt, content):
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini-2024-07-18",  # Use GPT-4
+        messages=[
+            {"role": "system", "content": "You are an assistant specialized in evaluating candidates based on specific criteria."},
+            {"role": "user", "content": prompt + content}
+        ],
+        functions=[
+            {
+                "name": "response",
+                "parameters": cleaned_schema
+            }
+        ]
+    )
+    response_content = response["choices"][0]["message"]["content"]
+    response_json = json.loads(response_content)
     time.sleep(3)
     return response_json
-    
-def get_gemini_response2(prompt, content):
-    model = genai.GenerativeModel('models/gemini-1.5-flash-latest',
-                                    generation_config={
-                                        "response_mime_type": "application/json",
-                                        "response_schema": new_schema # Dùng schema đã làm sạch
-                                    }
-                                    )
 
-    response = model.generate_content(prompt + content)
-    response_json = json.loads(response.text)
+# def get_gemini_response2(prompt, content):
+#     model = genai.GenerativeModel('models/gemini-1.5-flash-latest',
+#                                     generation_config={
+#                                         "response_mime_type": "application/json",
+#                                         "response_schema": new_schema # Dùng schema đã làm sạch
+#                                     }
+#                                     )
+
+#     response = model.generate_content(prompt + content)
+#     response_json = json.loads(response.text)
+#     time.sleep(3)
+#     return response_json
+
+def get_gpt4_response2(prompt, content):
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini-2024-07-18",  # Use GPT-4
+        messages=[
+            {"role": "system", "content": "You are an assistant specialized in evaluating candidates based on specific criteria."},
+            {"role": "user", "content": prompt + content}
+        ],
+        functions=[
+            {
+                "name": "response",
+                "parameters": new_schema
+            }
+        ]
+    )
+    response_content = response["choices"][0]["message"]["content"]
+    response_json = json.loads(response_content)
     time.sleep(3)
     return response_json
 
@@ -296,7 +340,7 @@ with tab1:
                         Vui lòng trả về kết quả đánh giá theo đúng schema JSON đã định nghĩa.
                         """
                         try:
-                            response2 = get_gemini_response2(prompt2, cv_text)
+                            response2 = get_gpt4_response2(prompt2, cv_text)
                             main_CV_score = round((response2["muc_do_phu_hop"] + response2["ky_nang_ky_thuat"] + response2["kinh_nghiem"] + response2["trinh_do_hoc_van"] + response2["ky_nang_mem"])/5, 2)
                 
                             if expect_salary > 0:
@@ -334,7 +378,7 @@ with tab1:
                                 Vui lòng trả về kết quả đánh giá theo đúng schema JSON đã định nghĩa.
                                 Chú ý: Các tiêu chí mà bạn không chắc hoặc không ghi rõ trong CV thì bạn sẽ +0 điểm.
                                 """
-                                response1 = get_gemini_response1(prompt1, cv_text)
+                                response1 = get_gpt4_response1(prompt1, cv_text)
                                 main_criteria_score = response1["truc_nang_luc"] + response1["truc_van_hoa"] + response1["truc_tuong_lai"] + response1["tieu_chi_khac"] + response1["diem_cong"] - response1["diem_tru"]
                                 
                                 # Determine Pass/Fail based on salary and main criteria score
