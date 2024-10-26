@@ -19,7 +19,8 @@ import openai
 import time
 # Import the os package
 import os
-
+from pydantic import BaseModel
+from openai import OpenAI
 # Import the openai package
 import openai
 
@@ -102,7 +103,6 @@ def get_gemini_response1(prompt, content):
     return response_json
 
 def get_gpt4_response1(prompt: str, content: str):
-    client = OpenAI()
     completion = client.chat.completions.create(
         model="gpt-4o-mini-2024-07-18",
         messages=[
@@ -137,7 +137,6 @@ def get_gemini_response2(prompt, content):
     return response_json
 
 def get_gpt4_response2(prompt: str, content: str):
-    client = OpenAI()
     completion = client.chat.completions.create(
         model="gpt-4o-mini-2024-07-18",
         messages=[
