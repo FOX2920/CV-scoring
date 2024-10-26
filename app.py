@@ -188,7 +188,7 @@ def process_data(data):
     if 'candidates' not in data:
         st.error("Không tìm thấy ứng viên trong phản hồi.")
         return None
-    df = pd.DataFrame(data['candidates'])
+    df = pd.DataFrame(data)
     
     df['cvs'] = df['cvs'].apply(lambda x: x[0] if len(x) > 0 else None)
     df['cvs'] = df['cvs'].astype(str) 
