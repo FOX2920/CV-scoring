@@ -151,11 +151,13 @@ def extract_ids_from_url(url):
     return None, None
 
 def fetch_data(job_url, access_token, start_date):
+    # Extract opening_id from URL
     opening_id, stage_id = extract_ids_from_url(job_url)
     if not opening_id:
         st.error("Invalid URL. Could not extract opening_id.")
         return None
         
+    url = "https://hiring.base.vn/publicapi/v2/candidate/list"
     page = 1
     all_candidates = []
     
@@ -168,17 +170,17 @@ def fetch_data(job_url, access_token, start_date):
             'access_token': access_token,
             'opening_id': opening_id,
             'num_per_page': '10000',
-            'page': page
+            'page': page,
+            'start_date': start_date
         }
         
         try:
-            response = requests.post(job_url, headers=headers, data=payload)
+            response = requests.post(url, headers=headers, data=payload)
             response.raise_for_status()  # Raise exception for bad status codes
             data = response.json()
             
             if 'candidates' not in data or not data['candidates']:
                 break
-                
             # Convert start_date to datetime for comparison
             start_datetime = datetime.combine(start_date, datetime.min.time())
             
@@ -187,10 +189,8 @@ def fetch_data(job_url, access_token, start_date):
                 candidate for candidate in data['candidates']
                 if datetime.strptime(candidate.get('created_at', '1900-01-01'), '%Y-%m-%d') >= start_datetime
             ]
-            
             all_candidates.extend(filtered_candidates)
             page += 1
-            
         except requests.exceptions.RequestException as e:
             st.error(f"Error fetching data: {str(e)}")
             return None
@@ -225,17 +225,26 @@ def process_data(data):
         # Unescape HTML entities in name
         df['name'] = df['name'].apply(lambda x: unescape(str(x)) if x else x)
         
-        # Extract salary expectations
+        # Extract numeric value from salary
+        def extract_numeric_salary(salary):
+            if not salary:
+                return 0
+            match = re.search(r'(\d{1,3}(?:,\d{3})*)', str(salary))
+            return int(match.group(1).replace(',', '')) if match else 0
+            
+        # Extract 'Mức lương mong muốn' from the 'fields' column
+        def extract_salary(fields):
+            for field in fields:
+                if field.get('id') == 'muc_luong_mong_muon':
+                    return extract_numeric_salary(field.get('value', '0'))
+            return 0
+        # Apply salary extraction
         df['expect_salary'] = df['form'].apply(extract_salary)
-        
         # Filter out rows with invalid CVs
         df = df[df['cvs'].notnull() & (df['cvs'] != "None")]
-        
         # Select and rename relevant columns
         selected_df = df[['id', 'name', 'email', 'status', 'cvs', 'expect_salary']]
-        
         return selected_df
-        
     except Exception as e:
         st.error(f"Error processing data: {str(e)}")
         return None
