@@ -23,11 +23,7 @@ import os
 # Import the openai package
 import openai
 
-# From the IPython.display package, import display and Markdown
-from IPython.display import display, Markdown
 
-# Import yfinance as yf
-import yfinance as yf
 import json
 
 # Set up your OpenAI API key
