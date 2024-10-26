@@ -43,7 +43,7 @@ def dashboard():
 
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
-        df =df.drop_duplicates()
+        df = df.drop_duplicates(subset=['Tên ứng viên', 'Email', 'Trạng thái', 'Link CV'], keep='first')
         df.rename(columns={
                 'Điểm tổng quát soft skill' : 'Điểm tổng quát theo tiêu chí', 
                 'Điểm tổng quát hard skill':'Điểm tổng quát theo CV', 
