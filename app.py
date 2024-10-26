@@ -157,22 +157,16 @@ def fetch_data(job_url, access_token, start_date):
     all_candidates = []
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     while True:
-        # Update payload for each page
         payload = {
             'access_token':'5654-PTE7TTHBUKSU5W8XT2T3QDHRN7Y463A3T6ZDDP7DK95EZJBWSRLNLFKZNWKQGED4-FXYJZT6CBF89EEV2QYMNNDZZ7BSBU8KXJZTJJ643XZS8AWWBHUEE47MMAKC6GCRC',
             'opening_id':'6797', 
             'num_per_page':'10000',
             'page': page,
         }
-    
         response = requests.post(url, headers=headers, data=payload)
         data = response.json()
-        
         if 'candidates' not in data or not data['candidates']:
-            # Exit loop if no candidates on the current page
             break
-        
-        # Append candidates from the current page
         all_candidates.extend(data['candidates'])
         page += 1  # Move to the next page
     return all_candidates
@@ -324,6 +318,7 @@ with tab1:
         if candidate_url and access_token:
             if is_valid_url(candidate_url):
                 data = process_data(fetch_data(candidate_url, access_token, start_date))
+                st.dataframe(data)
                 st.success("✅ Đã lấy thông tin ứng viên thành công!")
                 st.header("📊 Đánh giá và Lọc CV")
                 jd_df = pd.read_csv('JD_tc.csv')
