@@ -152,34 +152,43 @@ def extract_ids_from_url(url):
 
 def fetch_data(job_url, access_token, start_date):
     opening_id, stage_id = extract_ids_from_url(job_url)
-    if not opening_id or not stage_id:
-        st.error("URL không hợp lệ. Không thể trích xuất opening_id và stage_id.")
-        return None
-    api_url = "https://hiring.base.vn/publicapi/v2/candidate/list"
-    payload = {
-        'access_token': access_token,
-        'opening_id': opening_id,
-        'num_per_page': '10000',
-        'stage_id': stage_id,
-        'start_date': start_date.strftime('%Y-%m-%d'),
-        'end_date': ''
-    }
+    url = "https://hiring.base.vn/publicapi/v2/candidate/list"
+    page = 1
+    all_candidates = []
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    response = requests.post(api_url, headers=headers, data=payload)
-    return response.json()
-
+    while True:
+        # Update payload for each page
+        payload = {
+            'access_token':'5654-PTE7TTHBUKSU5W8XT2T3QDHRN7Y463A3T6ZDDP7DK95EZJBWSRLNLFKZNWKQGED4-FXYJZT6CBF89EEV2QYMNNDZZ7BSBU8KXJZTJJ643XZS8AWWBHUEE47MMAKC6GCRC',
+            'opening_id':'6797', 
+            'num_per_page':'10000',
+            'page': page,
+        }
+    
+        response = requests.post(url, headers=headers, data=payload)
+        data = response.json()
+        
+        if 'candidates' not in data or not data['candidates']:
+            # Exit loop if no candidates on the current page
+            break
+        
+        # Append candidates from the current page
+        all_candidates.extend(data['candidates'])
+        page += 1  # Move to the next page
+    return all_candidates
+    
 def extract_salary(fields):
     for field in fields:
         if field.get('id') == 'muc_luong_mong_muon':  
             salary = extract_numeric_salary(field.get('value', '0'))
-            return salary if salary is not None else -1
-    return -1  # Return 0 if 'muc_luong_mong_muon' field is not found
+            return salary if salary is not None else 0
+    return 0  # Return 0 if 'muc_luong_mong_muon' field is not found
 
 def extract_numeric_salary(salary):
     if not salary:
         return 0
     match = re.search(r'(\d{1,3}(?:,\d{3})*)', str(salary))
-    return int(match.group(1).replace(',', '')) if match else -1
+    return int(match.group(1).replace(',', '')) if match else 0
 
 def process_data(data):
     if 'candidates' not in data:
