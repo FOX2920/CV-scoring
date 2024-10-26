@@ -152,23 +152,50 @@ def extract_ids_from_url(url):
 
 def fetch_data(job_url, access_token, start_date):
     opening_id, stage_id = extract_ids_from_url(job_url)
+    if not opening_id:
+        st.error("Invalid URL. Could not extract opening_id.")
+        return None
+        
     url = "https://hiring.base.vn/publicapi/v2/candidate/list"
     page = 1
     all_candidates = []
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    
     while True:
         payload = {
-            'access_token':'5654-PTE7TTHBUKSU5W8XT2T3QDHRN7Y463A3T6ZDDP7DK95EZJBWSRLNLFKZNWKQGED4-FXYJZT6CBF89EEV2QYMNNDZZ7BSBU8KXJZTJJ643XZS8AWWBHUEE47MMAKC6GCRC',
-            'opening_id': opening_id, 
-            'num_per_page':'10000',
-            'page': page,
+            'access_token': access_token,
+            'opening_id': opening_id,
+            'num_per_page': '10000',
+            'page': page
         }
-        response = requests.post(url, headers=headers, data=payload)
-        data = response.json()
-        if 'candidates' not in data or not data['candidates']:
-            break
-        all_candidates.extend(data['candidates'])
-        page += 1  # Move to the next page
+        
+        try:
+            response = requests.post(url, headers=headers, data=payload)
+            response.raise_for_status()  # Raise exception for bad status codes
+            data = response.json()
+            
+            if 'candidates' not in data or not data['candidates']:
+                break
+                
+            # Convert start_date to datetime for comparison
+            start_datetime = datetime.combine(start_date, datetime.min.time())
+            
+            # Filter candidates based on date if needed
+            filtered_candidates = [
+                candidate for candidate in data['candidates']
+                if datetime.strptime(candidate.get('created_at', '1900-01-01'), '%Y-%m-%d') >= start_datetime
+            ]
+            
+            all_candidates.extend(filtered_candidates)
+            page += 1
+            
+        except requests.exceptions.RequestException as e:
+            st.error(f"Error fetching data: {str(e)}")
+            return None
+            
     return all_candidates
     
 def extract_salary(fields):
@@ -185,24 +212,38 @@ def extract_numeric_salary(salary):
     return int(match.group(1).replace(',', '')) if match else 0
 
 def process_data(data):
-    if 'candidates' not in data:
-        st.error("Không tìm thấy ứng viên trong phản hồi.")
+    if not data:
+        st.error("No candidate data to process.")
         return None
-    df = pd.DataFrame(data)
-    
-    df['cvs'] = df['cvs'].apply(lambda x: x[0] if len(x) > 0 else None)
-    df['cvs'] = df['cvs'].astype(str) 
-    df['title'] = df['title'].apply(lambda x: re.sub(r'<.*?>', '', x) if isinstance(x, str) else x)
-    df['name'] = df['name'].apply(lambda x: unescape(x))
-    df['expect_salary'] = df['form'].apply(extract_salary)
-    
-    # Filter rows where 'cvs' is not None or "None"
-    df = df[df['cvs'].notnull() & (df['cvs'] != "None")]
-    
-    
-    selected_df = df[['id', 'name', 'email', 'status', 'cvs', 'expect_salary']]
-    
-    return selected_df
+        
+    try:
+        # Create DataFrame from candidates data
+        df = pd.DataFrame(data)
+        
+        # Process CVs column - take first CV if multiple exist
+        df['cvs'] = df['cvs'].apply(lambda x: x[0] if isinstance(x, list) and len(x) > 0 else None)
+        df['cvs'] = df['cvs'].astype(str)
+        
+        # Clean HTML tags from title
+        df['title'] = df['title'].apply(lambda x: re.sub(r'<.*?>', '', str(x)) if x else x)
+        
+        # Unescape HTML entities in name
+        df['name'] = df['name'].apply(lambda x: unescape(str(x)) if x else x)
+        
+        # Extract salary expectations
+        df['expect_salary'] = df['form'].apply(extract_salary)
+        
+        # Filter out rows with invalid CVs
+        df = df[df['cvs'].notnull() & (df['cvs'] != "None")]
+        
+        # Select and rename relevant columns
+        selected_df = df[['id', 'name', 'email', 'status', 'cvs', 'expect_salary']]
+        
+        return selected_df
+        
+    except Exception as e:
+        st.error(f"Error processing data: {str(e)}")
+        return None
 
 def fetch_jd(job_url, access_token):
     opening_id, stage_id = extract_ids_from_url(job_url)
