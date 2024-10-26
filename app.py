@@ -212,10 +212,6 @@ def extract_numeric_salary(salary):
     return int(match.group(1).replace(',', '')) if match else 0
 
 def process_data(data):
-    if not data:
-        st.error("No candidate data to process.")
-        return None
-        
     try:
         # Create DataFrame from candidates data
         df = pd.DataFrame(data)
