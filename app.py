@@ -19,10 +19,11 @@ import openai
 import time
 # Import the os package
 import os
-from pydantic import BaseModel
-from openai import OpenAI
 # Import the openai package
 import openai
+from pydantic import BaseModel
+from openai import OpenAI
+
 
 
 import json
