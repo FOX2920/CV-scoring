@@ -170,17 +170,17 @@ def fetch_data(job_url, access_token, start_date):
             'access_token': access_token,
             'opening_id': opening_id,
             'num_per_page': '10000',
-            'page': page,
-            'start_date': start_date
+            'page': page
         }
         
         try:
             response = requests.post(url, headers=headers, data=payload)
-            response.raise_for_status()  # Raise exception for bad status codes
+            response.raise_for_status()
             data = response.json()
             
-            if 'candidates' not in data or not data['candidates']:
+            if not data.get('candidates'):
                 break
+                
             # Convert start_date to datetime for comparison
             start_datetime = datetime.combine(start_date, datetime.min.time())
             
@@ -189,10 +189,15 @@ def fetch_data(job_url, access_token, start_date):
                 candidate for candidate in data['candidates']
                 if datetime.strptime(candidate.get('created_at', '1900-01-01'), '%Y-%m-%d') >= start_datetime
             ]
+            
             all_candidates.extend(filtered_candidates)
             page += 1
+            
         except requests.exceptions.RequestException as e:
             st.error(f"Error fetching data: {str(e)}")
+            return None
+        except ValueError as e:
+            st.error(f"Error processing data: {str(e)}")
             return None
             
     return all_candidates
@@ -211,9 +216,20 @@ def extract_numeric_salary(salary):
     return int(match.group(1).replace(',', '')) if match else 0
 
 def process_data(data):
+    if data is None or len(data) == 0:
+        st.error("No data received to process")
+        return None
+        
     try:
         # Create DataFrame from candidates data
         df = pd.DataFrame(data)
+        
+        # Ensure required columns exist
+        required_columns = ['cvs', 'title', 'name', 'form', 'id', 'email', 'status']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            st.error(f"Missing required columns: {', '.join(missing_columns)}")
+            return None
         
         # Process CVs column - take first CV if multiple exist
         df['cvs'] = df['cvs'].apply(lambda x: x[0] if isinstance(x, list) and len(x) > 0 else None)
@@ -225,26 +241,50 @@ def process_data(data):
         # Unescape HTML entities in name
         df['name'] = df['name'].apply(lambda x: unescape(str(x)) if x else x)
         
-        # Extract numeric value from salary
+        # Extract salary with better error handling
         def extract_numeric_salary(salary):
-            if not salary:
+            if not salary or not isinstance(salary, (str, int, float)):
                 return 0
-            match = re.search(r'(\d{1,3}(?:,\d{3})*)', str(salary))
-            return int(match.group(1).replace(',', '')) if match else 0
-            
-        # Extract 'Mức lương mong muốn' from the 'fields' column
+            try:
+                if isinstance(salary, (int, float)):
+                    return int(salary)
+                match = re.search(r'(\d{1,3}(?:,\d{3})*)', str(salary))
+                return int(match.group(1).replace(',', '')) if match else 0
+            except (ValueError, AttributeError):
+                return 0
+                
         def extract_salary(fields):
+            if not isinstance(fields, list):
+                return 0
             for field in fields:
-                if field.get('id') == 'muc_luong_mong_muon':
+                if isinstance(field, dict) and field.get('id') == 'muc_luong_mong_muon':
                     return extract_numeric_salary(field.get('value', '0'))
             return 0
+            
         # Apply salary extraction
         df['expect_salary'] = df['form'].apply(extract_salary)
+        
         # Filter out rows with invalid CVs
         df = df[df['cvs'].notnull() & (df['cvs'] != "None")]
+        
+        # Verify we have data after filtering
+        if len(df) == 0:
+            st.warning("No valid CV data found after filtering")
+            return None
+            
         # Select and rename relevant columns
         selected_df = df[['id', 'name', 'email', 'status', 'cvs', 'expect_salary']]
+        
+        # Ensure DataFrame is properly indexed
+        selected_df = selected_df.reset_index(drop=True)
+        
+        # Verify the final DataFrame
+        if selected_df.empty:
+            st.error("No valid data after processing")
+            return None
+            
         return selected_df
+        
     except Exception as e:
         st.error(f"Error processing data: {str(e)}")
         return None
