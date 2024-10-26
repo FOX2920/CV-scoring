@@ -144,13 +144,13 @@ def dashboard():
         positions = ['Tư vấn', 'Quản lý', 'Nhân viên', 'Thực tập sinh']
         for position in positions:
             if position != 'Thực tập sinh':
-                st.subheader(f"Top 5 ứng viên cho Vị trí tương ứng: {position} theo tiêu chí")
+                st.subheader(f"Top 5 ứng viên cho Vị trí tương ứng: {position}")
                 top_candidates_position = df[df['Vị trí tương ứng'] == position].sort_values('Điểm tổng quát theo tiêu chí', ascending=False).head(5)
                 display_df = top_candidates_position[['Tên ứng viên', 'Điểm tổng quát theo tiêu chí', 'Điểm tổng quát theo CV', 'Trục Năng lực', 'Trục Phù hợp Văn hóa', 'Trục Tương lai', 'Tiêu chí khác', 'Điểm cộng', 'Điểm trừ']]
                 display_df['Điểm tổng quát theo CV'] = display_df['Điểm tổng quát theo CV'].apply(lambda x: f"{x:.2f}")
                 st.table(display_df)
             else:
-                st.subheader(f"Top 5 ứng viên cho Vị trí tương ứng: {position} theo CV")
+                st.subheader(f"Top 5 ứng viên cho Vị trí tương ứng: {position}")
                 top_candidates_position = df[df['Vị trí tương ứng'] == position].sort_values('Điểm tổng quát theo CV', ascending=False).head(5)
                 display_df = top_candidates_position[['Tên ứng viên', 'Điểm tổng quát theo CV', 'Điểm tổng quát theo tiêu chí', 'Mức độ phù hợp', 'Kỹ năng kỹ thuật', 'Kinh nghiệm', 'Trình độ học vấn', 'Kỹ năng mềm']]
                 display_df['Điểm tổng quát theo CV'] = display_df['Điểm tổng quát theo CV'].apply(lambda x: f"{x:.2f}")
