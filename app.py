@@ -199,8 +199,6 @@ def process_data(data):
     # Filter rows where 'cvs' is not None or "None"
     df = df[df['cvs'].notnull() & (df['cvs'] != "None")]
     
-    # Remove columns with all NaN values
-    df = df.dropna(axis=1, how='all')
     
     selected_df = df[['id', 'name', 'email', 'status', 'cvs', 'expect_salary']]
     
