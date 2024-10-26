@@ -121,7 +121,7 @@ def get_gpt4_response1(prompt: str, content: str):
     response_content = completion.choices[0].message.function_call.arguments
     response_json = json.loads(response_content)
     
-    time.sleep(2)
+    time.sleep(1.5)
     return response_json
     
 def get_gemini_response2(prompt, content):
@@ -155,7 +155,7 @@ def get_gpt4_response2(prompt: str, content: str):
     response_content = completion.choices[0].message.function_call.arguments
     response_json = json.loads(response_content)
     
-    time.sleep(2)
+    time.sleep(1.5)
     return response_json
 
 def extract_ids_from_url(url):
