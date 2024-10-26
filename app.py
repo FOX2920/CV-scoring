@@ -159,7 +159,7 @@ def fetch_data(job_url, access_token, start_date):
     while True:
         payload = {
             'access_token':'5654-PTE7TTHBUKSU5W8XT2T3QDHRN7Y463A3T6ZDDP7DK95EZJBWSRLNLFKZNWKQGED4-FXYJZT6CBF89EEV2QYMNNDZZ7BSBU8KXJZTJJ643XZS8AWWBHUEE47MMAKC6GCRC',
-            'opening_id':'6797', 
+            'opening_id': opening_id, 
             'num_per_page':'10000',
             'page': page,
         }
