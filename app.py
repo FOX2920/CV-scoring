@@ -29,7 +29,7 @@ from openai import OpenAI
 import json
 
 # Set up your OpenAI API key
-openai.api_key = st.secrets["OPEN_AI_KEY"]
+os.environ['OPENAI_API_KEY'] = st.secrets["OPEN_AI_KEY"]
 client = OpenAI()
 
 im = Image.open("aplus.ico")
