@@ -156,7 +156,6 @@ def fetch_data(job_url, access_token, start_date):
         st.error("Invalid URL. Could not extract opening_id.")
         return None
         
-    url = "https://hiring.base.vn/publicapi/v2/candidate/list"
     page = 1
     all_candidates = []
     
@@ -173,7 +172,7 @@ def fetch_data(job_url, access_token, start_date):
         }
         
         try:
-            response = requests.post(url, headers=headers, data=payload)
+            response = requests.post(job_url, headers=headers, data=payload)
             response.raise_for_status()  # Raise exception for bad status codes
             data = response.json()
             
